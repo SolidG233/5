@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>main.js - Visual Studio Code</title>
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<style>
+    /* --- VS Code 风格重置 --- */
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Consolas', 'Menlo', 'Monaco', monospace; background: #1e1e1e; color: #cccccc; user-select: none; }
+    * { box-sizing: border-box; }
+
+    .vscode-container { display: flex; height: 100%; flex-direction: column; }
+    
+    /* 顶部标题栏 */
+    .title-bar { height: 30px; background: #3c3c3c; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #cccccc; position: relative; }
+    .title-bar .traffic-lights { position: absolute; left: 10px; display: flex; gap: 8px; }
+    .traffic-light { width: 12px; height: 12px; border-radius: 50%; }
+    .close { background: #ff5f56; } .minimize { background: #ffbd2e; } .maximize { background: #27c93f; }
+
+    /* 主体区域 */
+    .workspace { flex: 1; display: flex; overflow: hidden; }
+
+    /* 左侧活动栏 */
+    .activity-bar { width: 50px; background: #333333; display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
+    .activity-icon { width: 48px; height: 48px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.6; font-size: 24px; border-left: 2px solid transparent; }
+    .activity-icon:hover, .activity-icon.active { opacity: 1; color: white; }
+    .activity-icon.active { border-left-color: white; }
+
+    /* 左侧侧边栏 */
+    .sidebar { width: 250px; background: #252526; border-right: 1px solid #000; display: flex; flex-direction: column; }
+    .sidebar-header { height: 35px; padding: 0 20px; display: flex; align-items: center; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .sidebar-content { padding: 10px; font-size: 13px; display: flex; flex-direction: column; height: 100%; }
+    
+    /* 输入框与按钮 */
+    .vscode-input { background: #3c3c3c; border: 1px solid #3c3c3c; color: #ccc; padding: 6px; width: 100%; margin-bottom: 10px; font-family: inherit; outline: none; }
+    .vscode-input:focus { border-color: #007fd4; }
+    .vscode-btn { background: #0e639c; color: white; border: none; padding: 6px 12px; cursor: pointer; width: 100%; margin-bottom: 5px; }
+    .vscode-btn:hover { background: #1177bb; }
+    .vscode-btn:disabled { background: #4d4d4d; color: #888; cursor: not-allowed; }
+    
+    /* 日志区 */
+    .status-log { margin-top: auto; color: #888; font-size: 12px; height: 150px; overflow-y: auto; white-space: pre-wrap; border-top: 1px solid #333; padding-top: 5px; }
+    .log-item { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+    .log-success { color: #4ec9b0; }
+    .log-error { color: #f48771; }
+    .log-info { color: #569cd6; }
+    .log-warn { color: #cca700; }
+
+    /* 技能卡片区域 */
+    .skill-section { margin-top: 20px; border: 1px solid #3c3c3c; padding: 10px; background: #2d2d2d; display: flex; flex-direction: column; min-height: 200px; }
+    #skills-container { flex: 1; overflow-y: auto; margin-top: 5px; }
+    
+    .skill-card { 
+        background: #1e1e1e; border-left: 3px solid #c586c0; padding: 8px; margin-bottom: 5px; 
+        cursor: pointer; transition: 0.2s; position: relative;
+    }
+    .skill-card:hover { background: #333; }
+    .skill-card.active { border-left-color: #4ec9b0; background: #252526; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+    .skill-name { font-weight: bold; color: #9cdcfe; margin-bottom: 4px; }
+    .skill-desc { font-size: 11px; color: #888; }
+
+    /* 编辑器区域 (棋盘) */
+    .editor-group { flex: 1; background: #1e1e1e; display: flex; flex-direction: column; position: relative; }
+    .tabs-header { height: 35px; background: #2d2d2d; display: flex; overflow-x: auto; }
+    .tab { height: 100%; background: #1e1e1e; color: #fff; padding: 0 15px; display: flex; align-items: center; font-size: 13px; border-top: 1px solid #007fd4; min-width: 120px; }
+    .tab-icon { margin-right: 6px; color: #f1e05a; } 
+
+    .editor-content { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; background: #1e1e1e; }
+    
+    /* 棋盘网格 */
+    #board { 
+        display: grid; 
+        grid-template-columns: repeat(15, 30px); 
+        grid-template-rows: repeat(15, 30px); 
+        background: #2b2b2b; border: 1px solid #444; position: relative;
+    }
+
+    .cell { width: 30px; height: 30px; position: relative; cursor: pointer; }
+    .cell::before { content: ''; position: absolute; top: 14px; left: 0; width: 100%; height: 1px; background: #555; }
+    .cell::after { content: ''; position: absolute; left: 14px; top: 0; height: 100%; width: 1px; background: #555; }
+    
+    /* 技能模式下的光标 */
+    .destroy-mode .cell { cursor: crosshair; }
+    .destroy-mode .cell:hover::before, .destroy-mode .cell:hover::after { background: #f48771; }
+    
+    .random-mode .cell { cursor: help; }
+    .random-mode .cell:hover { background: rgba(78, 201, 176, 0.2); }
+
+    .piece {
+        width: 24px; height: 24px; border-radius: 50%; position: absolute; top: 3px; left: 3px; z-index: 2;
+        box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    .piece.black { background: #000; border: 1px solid #333; }
+    .piece.white { background: #dcdcdc; border: 1px solid #999; }
+    .piece.last::after {
+        content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 6px; height: 6px; background: red; border-radius: 50%;
+    }
+
+    /* 底部状态栏 */
+    .status-bar { height: 22px; background: #007fd4; color: white; display: flex; align-items: center; padding: 0 10px; font-size: 12px; justify-content: space-between; }
+    .status-left, .status-right { display: flex; gap: 15px; }
+    .status-item { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+    /* 游戏结束遮罩 */
+    #game-over-modal {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); z-index: 10;
+        display: none; justify-content: center; align-items: center; flex-direction: column;
+    }
+    .modal-box {
+        background: #252526; border: 1px solid #454545; padding: 20px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center;
+    }
+    .modal-title { font-size: 18px; margin-bottom: 10px; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="vscode-container">
+    <div class="title-bar">
+        <div class="traffic-lights"><div class="traffic-light close"></div><div class="traffic-light minimize"></div><div class="traffic-light maximize"></div></div>
+        <span>main.js - Visual Studio Code</span>
+    </div>
+
+    <div class="workspace">
+        <div class="activity-bar">
+            <div class="activity-icon" title="资源管理器">📄</div>
+            <div class="activity-icon" title="搜索">🔍</div>
+            <div class="activity-icon active" title="源代码管理 (联机)">🌱</div>
+            <div class="activity-icon" title="扩展 (技能)">🧩</div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">SOURCE CONTROL: GIT</div>
+            <div class="sidebar-content">
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom:5px; color:#bbb;">你的昵称 / ID</label>
+                    <input type="text" id="my-id-input" class="vscode-input" placeholder="输入房间号 (如: 101)">
+                </div>
+                
+                <button id="btn-host" class="vscode-btn" onclick="createGame()">创建主机 (执黑)</button>
+                <button id="btn-join" class="vscode-btn" style="background:#3a3d41;" onclick="joinGame()">连接主机 (执白)</button>
+                
+                <!-- 技能区域 -->
+                <div class="skill-section">
+                    <div style="font-weight:bold; margin-bottom:5px; font-size:11px;">EXTENSIONS (SKILLS)</div>
+                    <button id="btn-draw-skill" class="vscode-btn" style="background:#007fd4; font-size:12px;" onclick="drawSkill()" disabled>抽取技能卡 (0/3)</button>
+                    
+                    <!-- 技能卡片容器 -->
+                    <div id="skills-container"></div>
+                </div>
+
+                <button id="btn-restart" class="vscode-btn" style="background:#8f0e0e; margin-top:auto; display:none;" onclick="requestRestart()">重新开始</button>
+
+                <div class="status-log" id="log-box">
+                    <div class="log-item log-info">欢迎使用 VS Code Gomoku</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-group">
+            <div class="tabs-header">
+                <div class="tab"><span class="tab-icon">JS</span>main.js<span style="margin-left: 10px; font-size: 14px;">×</span></div>
+            </div>
+            <div class="editor-content">
+                <div id="board"><!-- Generated by JS --></div>
+                <div id="game-over-modal">
+                    <div class="modal-box">
+                        <div class="modal-title" id="winner-text">游戏结束</div>
+                        <button class="vscode-btn" onclick="requestRestart()">再来一局</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">master*</div>
+            <div class="status-item">0 errors, 0 warnings</div>
+        </div>
+        <div class="status-right">
+            <div class="status-item" id="date-status">2026-02-09</div>
+            <div class="status-item" id="turn-status">未连接</div>
+            <div class="status-item" id="role-status">Role: None</div>
+            <div class="status-item">JavaScript</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- 游戏配置 ---
+const BOARD_SIZE = 15;
+let boardState = Array(BOARD_SIZE * BOARD_SIZE).fill(0); 
+let myRole = 0; // 1:黑, 2:白
+let currentTurn = 1; 
+let isGameActive = false;
+
+// --- 技能配置 ---
+const SKILLS = [
+    { id: 'double', name: 'Double Await', desc: '连续下两子 (异步操作)' },
+    { id: 'destroy', name: 'Git Revert', desc: '移除对方一颗棋子，并且你可以继续落子' }, // 修改了描述
+    { id: 'random', name: 'Code Injection', desc: '随机生成2颗己方棋子 (注入依赖)' },
+    { id: 'shuffle', name: 'Git Rebase', desc: '打乱棋盘，且你可以继续落子 (重写历史)' },
+    { id: 'steal', name: 'Git Cherry-Pick', desc: '随机偷走对方一张卡片 (挑选提交)' }
+];
+let mySkills = []; // 当前持有的技能数组
+let hasDrawnThisTurn = false; // 本回合是否已抽卡
+let activeSkillMode = null; // 当前激活的技能对象 {id, index}
+let doubleMoveCount = 0; // 连下两子剩余次数
+
+// --- 网络配置 ---
+let peer = null;
+let conn = null;
+let myPeerId = null;
+
+// --- 初始化 ---
+const boardEl = document.getElementById('board');
+function initBoard() {
+    boardEl.innerHTML = '';
+    boardEl.className = ''; 
+    boardState.fill(0);
+    for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        cell.onclick = () => handleCellClick(i);
+        boardEl.appendChild(cell);
+    }
+    document.getElementById('game-over-modal').style.display = 'none';
+    
+    // 技能重置
+    mySkills = [];
+    hasDrawnThisTurn = false;
+    activeSkillMode = null;
+    
+    renderSkillCards();
+}
+initBoard();
+
+// 更新时间显示
+setInterval(() => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString();
+    document.getElementById('date-status').innerText = `2026-02-09 ${timeStr}`;
+}, 1000);
+
+function log(msg, type = 'info') {
+    const box = document.getElementById('log-box');
+    const div = document.createElement('div');
+    div.className = `log-item log-${type}`;
+    div.innerText = `[System] ${msg}`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+// --- PeerJS ---
+function initPeer(customId) {
+    const config = { debug: 1 };
+    peer = customId ? new Peer(customId, config) : new Peer(null, config);
+
+    peer.on('open', (id) => {
+        myPeerId = id;
+        log(`ID已生成: ${id}`, 'success');
+        document.getElementById('role-status').innerText = `ID: ${id}`;
+        document.getElementById('my-id-input').disabled = true;
+        document.getElementById('btn-host').disabled = true;
+        document.getElementById('btn-join').disabled = true;
+    });
+
+    peer.on('error', (err) => {
+        log(`错误: ${err.type}`, 'error');
+        if(err.type === 'unavailable-id') alert("ID被占用");
+    });
+
+    peer.on('connection', (c) => {
+        if (conn) { c.close(); return; }
+        conn = c;
+        setupConnection();
+        log(`客户端 ${c.peer} 已连接`, 'success');
+        startGame(1);
+    });
+}
+
+function createGame() {
+    const id = document.getElementById('my-id-input').value.trim();
+    if (!id) return alert("请输入房间号");
+    initPeer(id);
+    log("正在创建主机...", 'info');
+}
+
+function joinGame() {
+    const hostId = document.getElementById('my-id-input').value.trim();
+    if (!hostId) return alert("请输入主机ID");
+    initPeer(null); 
+    const checkOpen = setInterval(() => {
+        if (peer && !peer.disconnected && !peer.destroyed && myPeerId) {
+            clearInterval(checkOpen);
+            log(`正在连接 ${hostId}...`, 'info');
+            conn = peer.connect(hostId);
+            setupConnection();
+        }
+    }, 200);
+}
+
+function setupConnection() {
+    document.getElementById('btn-restart').style.display = 'block';
+    
+    conn.on('open', () => {
+        log("连接建立成功！", 'success');
+        if (myRole === 0) startGame(2); 
+    });
+
+    conn.on('data', (data) => {
+        handleNetworkData(data);
+    });
+
+    conn.on('close', () => {
+        log("连接已断开", 'error');
+        alert("对方已断开连接");
+        location.reload();
+    });
+}
+
+function handleNetworkData(data) {
+    switch (data.type) {
+        case 'move':
+            applyMoveLocal(data.index, data.player);
+            handleTurnChange(data.nextTurn);
+            break;
+        case 'multi_move': 
+            data.indices.forEach(idx => applyMoveLocal(idx, data.player));
+            handleTurnChange(data.nextTurn);
+            log("对方使用了 [Code Injection] 随机生成了棋子!", 'warn');
+            break;
+        case 'remove':
+            removePieceLocal(data.index);
+            handleTurnChange(data.nextTurn);
+            log("对方使用了 [Git Revert] 移除了你的棋子!", 'warn');
+            break;
+        case 'shuffle_board': 
+            boardState = data.newState;
+            refreshBoardUI();
+            handleTurnChange(data.nextTurn);
+            log("对方使用了 [Git Rebase] 打乱了整个棋盘!", 'warn');
+            checkFullBoardWin(); 
+            break;
+        
+        // --- 偷牌相关逻辑 ---
+        case 'steal_request':
+            handleStealRequest(data.nextTurn);
+            break;
+        case 'steal_response':
+            handleStealResponse(data.stolenSkill, data.success, data.nextTurn);
+            break;
+        // ------------------
+
+        case 'chat':
+            log(data.msg, 'warn');
+            break;
+        case 'restart':
+            log("对方请求重新开始", 'info');
+            resetGame();
+            break;
+    }
+}
+
+// 处理被偷请求
+function handleStealRequest(nextTurn) {
+    log("对方试图对你使用 [Git Cherry-Pick] 偷取卡片...", 'warn');
+    
+    if (mySkills.length === 0) {
+        // 我没有卡片，告诉对方偷取失败
+        conn.send({ type: 'steal_response', success: false, stolenSkill: null, nextTurn: nextTurn });
+        log("你没有卡片，对方偷取失败。", 'info');
+    } else {
+        // 随机移除一张
+        const randIdx = Math.floor(Math.random() * mySkills.length);
+        const stolen = mySkills.splice(randIdx, 1)[0];
+        renderSkillCards();
+        
+        conn.send({ type: 'steal_response', success: true, stolenSkill: stolen, nextTurn: nextTurn });
+        log(`你的 [${stolen.name}] 被对方偷走了！`, 'error');
+    }
+    // 被偷的一方不需要切换回合，回合权在发起方那边处理（发起方偷完后回合结束）
+    handleTurnChange(nextTurn);
+}
+
+// 处理偷取结果（发起方）
+function handleStealResponse(stolenSkill, success, nextTurn) {
+    if (success) {
+        if (mySkills.length < 3) {
+            mySkills.push(stolenSkill);
+            log(`成功偷取对方的 [${stolenSkill.name}]！`, 'success');
+        } else {
+            log(`成功偷取 [${stolenSkill.name}]，但你手牌已满，卡片被丢弃。`, 'warn');
+        }
+        renderSkillCards();
+    } else {
+        log("对方手牌为空，偷取失败！", 'error');
+    }
+    
+    // 偷取动作结束，切换回合
+    handleTurnChange(nextTurn);
+}
+
+function handleTurnChange(nextTurn) {
+    currentTurn = nextTurn;
+    
+    // 如果轮到我了，重置本回合抽卡状态
+    if (currentTurn === myRole) {
+        hasDrawnThisTurn = false;
+        log("轮到你的回合", 'info');
+    }
+    
+    updateStatus();
+}
+
+// --- 游戏逻辑 ---
+function startGame(role) {
+    myRole = role;
+    currentTurn = 1;
+    isGameActive = true;
+    resetGame(false);
+    
+    const roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
+    document.getElementById('role-status').innerText = `Role: ${roleName}`;
+    log(`游戏开始，你执 ${roleName}`, 'success');
+    
+    if (myRole === 1) {
+        hasDrawnThisTurn = false;
+    }
+    updateStatus();
+}
+
+// --- 技能逻辑 ---
+function renderSkillCards() {
+    const container = document.getElementById('skills-container');
+    container.innerHTML = ''; 
+
+    mySkills.forEach((skill, index) => {
+        const card = document.createElement('div');
+        card.className = 'skill-card';
+        if (activeSkillMode && activeSkillMode.index === index) {
+            card.classList.add('active');
+        }
+        
+        card.innerHTML = `
+            <div class="skill-name">${skill.name}</div>
+            <div class="skill-desc">${skill.desc}</div>
+            <div style="font-size:10px; color:#666; margin-top:3px;">点击使用</div>
+        `;
+        
+        card.onclick = () => activateSkill(index);
+        container.appendChild(card);
+    });
+
+    const drawBtn = document.getElementById('btn-draw-skill');
+    if (mySkills.length >= 3) {
+        drawBtn.innerText = "手牌已满 (3/3)";
+    } else if (hasDrawnThisTurn) {
+        drawBtn.innerText = "本回合已抽卡";
+    } else {
+        drawBtn.innerText = `抽取技能卡 (${mySkills.length}/3)`;
+    }
+}
+
+function drawSkill() {
+    if (!isGameActive) return;
+    if (currentTurn !== myRole) {
+        log("不是你的回合，无法抽卡", 'error');
+        return;
+    }
+    if (hasDrawnThisTurn) {
+        log("本回合已经抽过卡了", 'warn');
+        return;
+    }
+    if (mySkills.length >= 3) {
+        log("手牌已满 (3/3)，无法抽取", 'error');
+        return;
+    }
+
+    const randomSkill = SKILLS[Math.floor(Math.random() * SKILLS.length)];
+    mySkills.push(randomSkill);
+    hasDrawnThisTurn = true;
+    
+    renderSkillCards();
+    updateStatus();
+    log(`抽取技能: ${randomSkill.name}`, 'success');
+}
+
+function activateSkill(index) {
+    if (!isGameActive || currentTurn !== myRole) {
+        log("现在不是你的回合，无法激活技能", 'error');
+        return;
+    }
+    
+    const targetSkill = mySkills[index];
+    if (!targetSkill) return;
+
+    if (activeSkillMode && activeSkillMode.index === index) {
+        activeSkillMode = null;
+        boardEl.className = ''; 
+        log("技能已取消", 'info');
+        renderSkillCards();
+        return;
+    }
+
+    // 瞬发技能：Shuffle
+    if (targetSkill.id === 'shuffle') {
+        if (confirm("确定要使用 [Git Rebase] 打乱全盘吗？\n打乱后你依然可以进行一次落子。")) {
+            activeSkillMode = { id: targetSkill.id, index: index };
+            executeShuffle();
+            return;
+        } else { return; }
+    }
+
+    // 瞬发技能：Steal (Cherry-Pick)
+    if (targetSkill.id === 'steal') {
+        if (confirm("确定要使用 [Git Cherry-Pick] 偷取对方一张卡片吗？\n注意：这将消耗你的回合。")) {
+            activeSkillMode = { id: targetSkill.id, index: index };
+            executeSteal();
+            return;
+        } else { return; }
+    }
+
+    // 需要交互的技能
+    activeSkillMode = { id: targetSkill.id, index: index };
+    boardEl.className = ''; 
+
+    if (targetSkill.id === 'double') {
+        log("技能激活: 下一步将连续落两子", 'warn');
+        doubleMoveCount = 2;
+    } else if (targetSkill.id === 'destroy') {
+        log("技能激活: 请点击对方棋子进行移除", 'warn');
+        boardEl.classList.add('destroy-mode');
+    } else if (targetSkill.id === 'random') {
+        log("技能激活: 点击棋盘任意位置触发随机生成", 'warn');
+        boardEl.classList.add('random-mode');
+    }
+    
+    renderSkillCards();
+}
+
+function consumeSkill() {
+    if (activeSkillMode !== null) {
+        mySkills.splice(activeSkillMode.index, 1);
+        activeSkillMode = null;
+        boardEl.className = '';
+        renderSkillCards();
+    }
+}
+
+// --- 技能执行逻辑 ---
+
+function executeShuffle() {
+    let pieces = [];
+    boardState.forEach(p => { if (p !== 0) pieces.push(p); });
+
+    if (pieces.length === 0) {
+        log("棋盘为空，无法打乱", 'error');
+        activeSkillMode = null;
+        return;
+    }
+
+    let indices = Array.from({length: BOARD_SIZE * BOARD_SIZE}, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    boardState.fill(0);
+    pieces.forEach((p, i) => { boardState[indices[i]] = p; });
+
+    refreshBoardUI();
+    consumeSkill();
+
+    if (conn && conn.open) {
+        conn.send({ type: 'shuffle_board', newState: boardState, nextTurn: myRole });
+    }
+    
+    log("已执行 [Git Rebase]，棋盘已重排！请继续落子。", 'success');
+    checkFullBoardWin();
+}
+
+// 新增：执行偷取
+function executeSteal() {
+    consumeSkill(); // 先消耗掉自己的这张“偷取卡”
+    log("正在尝试偷取...", 'info');
+    
+    const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+    
+    if (conn && conn.open) {
+        // 发送偷取请求，并告知对方偷完后轮到谁（通常轮到对方，因为偷取是耗费回合的动作）
+        conn.send({ type: 'steal_request', nextTurn: nextTurnPlayer });
+    }
+    // 注意：这里我们不立即 handleTurnChange，而是等待对方的 steal_response 回来后再切换回合
+}
+
+function refreshBoardUI() {
+    const cells = boardEl.children;
+    for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        cell.innerHTML = ''; 
+        const val = boardState[i];
+        if (val !== 0) {
+            const piece = document.createElement('div');
+            piece.className = `piece ${val === 1 ? 'black' : 'white'}`;
+            cell.appendChild(piece);
+        }
+    }
+}
+
+// --- 点击处理 ---
+function handleCellClick(index) {
+    if (!isGameActive) return;
+    if (currentTurn !== myRole) {
+        log("还没轮到你！", 'error');
+        return;
+    }
+
+    if (activeSkillMode && activeSkillMode.id === 'destroy') {
+        handleDestroyClick(index);
+        return;
+    }
+
+    if (activeSkillMode && activeSkillMode.id === 'random') {
+        handleRandomSpawn();
+        return;
+    }
+
+    if (boardState[index] !== 0) return;
+    
+    applyMoveLocal(index, myRole);
+    
+    let nextTurnPlayer = (myRole === 1 ? 2 : 1);
+    
+    if (activeSkillMode && activeSkillMode.id === 'double') {
+        doubleMoveCount--;
+        if (doubleMoveCount > 0) {
+            nextTurnPlayer = myRole;
+            log("连击生效！请再落一子", 'success');
+        } else {
+            consumeSkill();
+            if (conn) conn.send({ type: 'chat', msg: "对方使用了 [Double Await] 连下两子!" });
+        }
+    }
+
+    if (conn && conn.open) {
+        conn.send({ type: 'move', index: index, player: myRole, nextTurn: nextTurnPlayer });
+    }
+
+    handleTurnChange(nextTurnPlayer);
+    
+    if (checkWin(index, myRole)) {
+        endGame(myRole);
+    }
+}
+
+// --- 核心修改区域：处理移除棋子 ---
+function handleDestroyClick(index) {
+    const targetOwner = boardState[index];
+    const opponent = (myRole === 1 ? 2 : 1);
+    
+    if (targetOwner !== opponent) {
+        log("只能移除对方的棋子！", 'error');
+        return;
+    }
+    removePieceLocal(index);
+    consumeSkill();
+    
+    // 修改处：移除后，下一回合依然是自己 (myRole)
+    const nextTurnPlayer = myRole; 
+    
+    if (conn && conn.open) {
+        conn.send({ type: 'remove', index: index, nextTurn: nextTurnPlayer });
+    }
+    
+    handleTurnChange(nextTurnPlayer);
+    
+    // 退出技能模式，恢复正常下棋
+    isUsingSkill = false;
+    currentSkillId = null;
+    updateBoardUI(); // 刷新高亮等状态（如果有）
+    
+    log("已移除对方棋子，请继续落子！", 'success');
+}
+
+function handleRandomSpawn() {
+    const emptyIndices = [];
+    for(let i=0; i<boardState.length; i++) {
+        if(boardState[i] === 0) emptyIndices.push(i);
+    }
+
+    if (emptyIndices.length < 2) {
+        log("棋盘空间不足，无法生成！", 'error');
+        return;
+    }
+
+    const targets = [];
+    for(let i=0; i<4; i++) { 
+        const randIndex = Math.floor(Math.random() * emptyIndices.length);
+        targets.push(emptyIndices[randIndex]);
+        emptyIndices.splice(randIndex, 1);
+    }
+
+    targets.forEach(idx => applyMoveLocal(idx, myRole));
+    consumeSkill();
+
+    const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+    if (conn && conn.open) {
+        conn.send({ type: 'multi_move', indices: targets, player: myRole, nextTurn: nextTurnPlayer });
+    }
+
+    handleTurnChange(nextTurnPlayer);
+    log(`随机生成了 4 个棋子`, 'success');
+
+    if (checkWin(targets[0], myRole) || checkWin(targets[1], myRole)) {
+        endGame(myRole);
+    }
+}
+
+// --- 棋盘操作 ---
+function applyMoveLocal(index, player) {
+    boardState[index] = player;
+    const cell = boardEl.children[index];
+    const piece = document.createElement('div');
+    piece.className = `piece ${player === 1 ? 'black' : 'white'} last`;
+    cell.appendChild(piece);
+
+    const prevLast = document.querySelectorAll('.piece.last');
+    prevLast.forEach(p => { if(p !== piece) p.classList.remove('last'); });
+}
+
+function removePieceLocal(index) {
+    boardState[index] = 0;
+    const cell = boardEl.children[index];
+    cell.innerHTML = ''; 
+    cell.classList.remove('p1', 'p2'); // 确保清除可能残留的类名（虽然你现在的CSS没用到这个）
+}
+
+function updateStatus() {
+    const statusEl = document.getElementById('turn-status');
+    const drawBtn = document.getElementById('btn-draw-skill');
+    
+    if (!isGameActive) {
+        statusEl.innerText = "游戏结束";
+        drawBtn.disabled = true;
+        return;
+    }
+    
+    const isMyTurn = currentTurn === myRole;
+    const turnName = currentTurn === 1 ? "黑方" : "白方";
+    statusEl.innerText = `${turnName}回合 ${isMyTurn ? '(你的回合)' : '(等待对方)'}`;
+    statusEl.style.color = isMyTurn ? '#4ec9b0' : '#cccccc';
+
+    if (isMyTurn) {
+        if (!hasDrawnThisTurn && mySkills.length < 3) {
+            drawBtn.disabled = false;
+        } else {
+            drawBtn.disabled = true;
+        }
+    } else {
+        drawBtn.disabled = true;
+    }
+    
+    renderSkillCards();
+}
+
+// 辅助函数：为了防止报错，补充一个空的 updateBoardUI，或者你可以根据需要实现它
+function updateBoardUI() {
+    // 这里可以用来清除棋盘的高亮状态，比如 destroy-mode
+    // 但因为 consumeSkill 里面已经做了 boardEl.className = ''，所以这里暂时留空即可
+}
+
+function checkWin(index, player) {
+    const x = index % BOARD_SIZE;
+    const y = Math.floor(index / BOARD_SIZE);
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+
+    for (let [dx, dy] of directions) {
+        let count = 1;
+        for (let i = 1; i < 5; i++) {
+            const nx = x + dx * i;
+            const ny = y + dy * i;
+            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
+            if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
+        }
+        for (let i = 1; i < 5; i++) {
+            const nx = x - dx * i;
+            const ny = y - dy * i;
+            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
+            if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
+        }
+        if (count >= 5) return true;
+    }
+    return false;
+}
+
+function checkFullBoardWin() {
+    for (let i = 0; i < boardState.length; i++) {
+        const player = boardState[i];
+        if (player !== 0) {
+            if (checkWin(i, player)) {
+                endGame(player);
+                return;
+            }
+        }
+    }
+}
+
+function endGame(winner) {
+    isGameActive = false;
+    const winnerName = winner === 1 ? "黑方" : "白方";
+    const modal = document.getElementById('game-over-modal');
+    const text = document.getElementById('winner-text');
+    text.innerText = `${winnerName} 获胜!`;
+    text.style.color = (winner === myRole) ? '#4ec9b0' : '#f48771';
+    modal.style.display = 'flex';
+    updateStatus();
+}
+
+function requestRestart() {
+    resetGame();
+    if (conn && conn.open) conn.send({ type: 'restart' });
+}
+
+function resetGame(sendLog = true) {
+    initBoard();
+    isGameActive = true;
+    currentTurn = 1;
+    updateStatus();
+    if(sendLog) log("游戏已重置", 'info');
+}
+</script>
+</body>
+</html>
