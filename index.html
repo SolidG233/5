@@ -386,13 +386,21 @@ log("对方使用了 [Git Reset --hard]，但你本来就没有手牌。", 'info
 handleTurnChange(nextTurn);
 }
 
+// --- 修复后的回合切换逻辑 ---
 function handleTurnChange(nextTurn) {
+const prevTurn = currentTurn; // 记录上一回合是谁
 currentTurn = nextTurn;
+
 if (currentTurn === myRole) {
+// 修复 Bug:
+// 只有当回合权真正发生交替（从对方转给我）时，才抽卡。
+// 如果上一回合也是我（说明是 Double Await 的连击中间态），则不抽卡。
+if (prevTurn !== myRole) {
 log("轮到你的回合", 'info');
 setTimeout(() => {
 autoDrawSkill();
 }, 500);
+}
 }
 updateStatus();
 }
