@@ -437,7 +437,7 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
                 <h2>🛠️ 技能 (Skills)</h2>
                 
                 <p><strong>1. 飞沙走石 (Git Revert)</strong></p>
-                <div class="code-block">移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁 3 回合无法落子。</div>
+                <div class="code-block">移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁无法落子。</div>
                 
                 <p><strong>2. 再来一次 (Double Commit)</strong></p>
                 <div class="code-block">本回合可以连续落下两颗棋子。</div>
@@ -489,7 +489,7 @@ let voidTracker = []; // 结构: [{ index: 123, duration: 2 }]
 // 修改这里的 name 会直接影响特效文字
 const SKILLS = [
     // 修改：将封锁时间改为3回合
-    { id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域3回合', weight: 30, color: '#f48771', icon: '⚡' },
+    { id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域', weight: 30, color: '#f48771', icon: '⚡' },
     { id: 'double', name: '再来一次！', desc: '连续下两个棋子 ', weight: 10, color: '#569cd6', icon: '✨' },
     { id: 'shuffle', name: '两极反转！', desc: '打乱棋盘重排 会跳过你的回合', weight: 39, color: '#c586c0', icon: '🌀' },
     { id: 'reset_hard', name: '一忘皆空！', desc: '清空对方手牌，但对方随机落子补偿', weight: 10, color: '#dcdcaa', icon: '🔥' },
@@ -1350,7 +1350,7 @@ function markCellAsVoid(index) {
     
     // 修改：duration 设置为 4，确保能持续3个完整的回合交替
     // 流程：释放(4) -> 对手(3) -> 我(2) -> 对手(1) -> 我(0,解锁)
-    voidTracker.push({ index: index, duration: 4 });
+    voidTracker.push({ index: index, duration: 6 });
 }
 
 function handleRandomSpawn() {
