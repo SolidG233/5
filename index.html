@@ -358,12 +358,12 @@ let voidTracker = []; // 结构: [{ index: 123, duration: 2 }]
 // 修改这里的 name 会直接影响特效文字
 const SKILLS = [
     // 修改：将封锁时间改为3回合
-    { id: 'destroy', name: 'Git Revert', desc: '飞沙走石！移除对方棋子并封锁该区域3回合', weight: 30, color: '#f48771' },
-    { id: 'double', name: 'Async Await', desc: '连续下两子 (异步操作)', weight: 10, color: '#569cd6' },
-    { id: 'shuffle', name: 'Git Rebase', desc: '两极反转！打乱棋盘重排 (消耗回合)', weight: 39, color: '#c586c0' },
-    { id: 'reset_hard', name: 'Git Reset', desc: '清空对方手牌，但对方随机落子补偿', weight: 10, color: '#dcdcaa' },
-    { id: 'random', name: 'Code Injection', desc: '擒拿擒拿！随机生成4颗己方棋子', weight: 10, color: '#4ec9b0' },
-    { id: 'force_win', name: 'Sudo Push', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d' }
+    { id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域3回合', weight: 30, color: '#f48771' },
+    { id: 'double', name: '再来一次！', desc: '连续下两个棋子 ', weight: 10, color: '#569cd6' },
+    { id: 'shuffle', name: '两极反转！', desc: '打乱棋盘重排 会跳过你的回合', weight: 39, color: '#c586c0' },
+    { id: 'reset_hard', name: '一忘皆空！', desc: '清空对方手牌，但对方随机落子补偿', weight: 10, color: '#dcdcaa' },
+    { id: 'random', name: '擒拿擒拿！', desc: '擒拿擒拿！随机生成4颗己方棋子', weight: 10, color: '#4ec9b0' },
+    { id: 'force_win', name: '欧皇降临', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d' }
 ];
 
 let mySkills = [];
