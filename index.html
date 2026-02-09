@@ -17,6 +17,7 @@
     --text-primary: #cccccc;
     --text-highlight: #ffffff;
     --grid-line: #2a2a2a;
+    --panel-width: 300px; /* 右侧面板宽度 */
 }
 
 body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace; background: var(--bg-dark); color: var(--text-primary); user-select: none; }
@@ -76,6 +77,15 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     animation: slideIn 0.3s ease-out;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+/* 新增：卡片获得时的高亮动画 */
+.skill-card.just-added {
+    animation: cardFlash 1s ease-out;
+}
+@keyframes cardFlash {
+    0% { background-color: #4ec9b0; transform: scale(1.05); }
+    100% { background-color: #2d2d2d; transform: scale(1); }
+}
+
 @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -90,13 +100,96 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .editor-group { flex: 1; background: var(--bg-dark); display: flex; flex-direction: column; position: relative; }
 .tabs-header { height: 35px; background: #2d2d2d; display: flex; overflow-x: auto; border-bottom: 1px solid #111; }
 .tab { height: 100%; background: var(--bg-dark); color: #fff; padding: 0 15px; display: flex; align-items: center; font-size: 13px; border-top: 1px solid var(--accent-blue); min-width: 140px; border-right: 1px solid #252526; }
+.tab.inactive { background: #2d2d2d; border-top: 1px solid transparent; color: #999; }
 .tab-icon { margin-right: 8px; color: #f1e05a; font-size: 14px; }
+.tab-icon.md { color: #519aba; }
 .unsaved-dot { width: 8px; height: 8px; background: white; border-radius: 50%; margin-left: auto; display: none; }
 
 .editor-body { flex: 1; display: flex; position: relative; overflow: hidden; }
 .gutter { width: 50px; background: var(--bg-dark); border-right: 1px solid #333; display: flex; flex-direction: column; align-items: flex-end; padding-top: 15px; padding-right: 10px; color: #5a5a5a; font-size: 12px; line-height: 30px; user-select: none; }
 
 .editor-content { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; background: var(--bg-dark); overflow: auto; }
+
+/* === 右侧说明面板 (新) === */
+.info-panel {
+    width: var(--panel-width);
+    background: var(--bg-sidebar);
+    border-left: 1px solid #000;
+    display: flex;
+    flex-direction: column;
+    color: #cccccc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.info-header {
+    height: 35px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #bbb;
+    background: #252526;
+    border-bottom: 1px solid #333;
+}
+.info-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.info-body h1 { font-size: 20px; margin-bottom: 10px; color: #4ec9b0; border-bottom: 1px solid #3c3c3c; padding-bottom: 5px; }
+.info-body h2 { font-size: 16px; margin-top: 20px; margin-bottom: 10px; color: #569cd6; }
+.info-body p { margin-bottom: 10px; color: #bbb; }
+.info-body ul { padding-left: 20px; margin-bottom: 10px; }
+.info-body li { margin-bottom: 5px; }
+.key-tag { background: #3c3c3c; padding: 2px 5px; border-radius: 3px; color: #ce9178; font-family: 'Consolas', monospace; font-size: 12px; border: 1px solid #454545; }
+.code-block { background: #1e1e1e; padding: 10px; border-radius: 4px; border: 1px solid #333; font-family: 'Consolas', monospace; color: #9cdcfe; margin: 10px 0; font-size: 12px; }
+
+/* === 获得卡片 Toast 通知 (新) === */
+.toast-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+    pointer-events: none;
+}
+.toast {
+    background: #252526;
+    border: 1px solid #454545;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    width: 300px;
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.toast::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #007fd4;
+}
+.toast-icon { font-size: 24px; }
+.toast-content { flex: 1; }
+.toast-title { font-weight: bold; font-size: 13px; color: #fff; margin-bottom: 2px; }
+.toast-desc { font-size: 12px; color: #999; }
+.toast-buttons { margin-top: 8px; display: flex; gap: 8px; }
+.toast-btn { background: #007fd4; color: white; border: none; padding: 4px 8px; font-size: 11px; cursor: pointer; border-radius: 2px; }
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateX(20px); }
+}
+
 
 /* 简约棋盘网格 */
 #board {
@@ -301,6 +394,7 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
         <div class="editor-group">
             <div class="tabs-header">
                 <div class="tab"><span class="tab-icon">JS</span>main.js<span class="unsaved-dot"></span><span style="margin-left: 10px; font-size: 14px; color:#999;">×</span></div>
+                <div class="tab inactive"><span class="tab-icon md">M↓</span>README.md</div>
             </div>
             <div class="editor-body">
                 <!-- 模拟行号 -->
@@ -312,6 +406,9 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
                     
                     <!-- 技能特效层 -->
                     <div id="skill-effect-overlay"></div>
+                    
+                    <!-- 获得卡片 Toast 容器 -->
+                    <div id="toast-container" class="toast-container"></div>
 
                     <div id="game-over-modal">
                         <div class="modal-box">
@@ -320,6 +417,44 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 新增：右侧说明面板 -->
+        <div class="info-panel">
+            <div class="info-header">MARKDOWN PREVIEW: README.md</div>
+            <div class="info-body">
+                <h1>Gomoku AI Extension</h1>
+                <p>欢迎使用 VS Code 五子棋插件。这是一个集成了 Git 版本控制概念的策略游戏。</p>
+                
+                <h2>🎮 游戏规则</h2>
+                <ul>
+                    <li><span class="key-tag">目标</span> 率先连成5子获胜。</li>
+                    <li><span class="key-tag">机制</span> 每位玩家每 <strong>2回合</strong> 自动获得一个随机技能（扩展包）。</li>
+                    <li><span class="key-tag">限制</span> 手牌上限为 3 张。</li>
+                </ul>
+
+                <h2>🛠️ 扩展包 (Skills)</h2>
+                
+                <p><strong>1. 飞沙走石 (Git Revert)</strong></p>
+                <div class="code-block">git revert &lt;commit_id&gt;</div>
+                <p>移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁 3 回合无法落子。</p>
+
+                <p><strong>2. 再来一次 (Double Commit)</strong></p>
+                <div class="code-block">git commit --amend</div>
+                <p>本回合可以连续落下两颗棋子。</p>
+
+                <p><strong>3. 两极反转 (Git Rebase)</strong></p>
+                <div class="code-block">git rebase --interactive</div>
+                <p>打乱棋盘上所有棋子的位置（保留数量），但会跳过你的本回合。</p>
+
+                <p><strong>4. 一忘皆空 (Git Reset --hard)</strong></p>
+                <div class="code-block">git reset --hard HEAD~1</div>
+                <p>清空对方所有手牌。作为补偿，系统会为对方随机落下等量的棋子。</p>
+
+                <p><strong>5. 擒拿擒拿 (Code Injection)</strong></p>
+                <p>随机在棋盘空位生成 4 颗己方棋子。</p>
+
             </div>
         </div>
     </div>
@@ -337,6 +472,7 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
             <div class="status-item" id="mode-status">Mode: Idle</div>
             <div class="status-item" id="turn-status">Waiting</div>
             <div class="status-item">JavaScript</div>
+            <div class="status-item">Markdown</div>
         </div>
     </div>
 </div>
@@ -358,12 +494,12 @@ let voidTracker = []; // 结构: [{ index: 123, duration: 2 }]
 // 修改这里的 name 会直接影响特效文字
 const SKILLS = [
     // 修改：将封锁时间改为3回合
-    { id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域3回合', weight: 30, color: '#f48771' },
-    { id: 'double', name: '再来一次！', desc: '连续下两个棋子 ', weight: 10, color: '#569cd6' },
-    { id: 'shuffle', name: '两极反转！', desc: '打乱棋盘重排 会跳过你的回合', weight: 39, color: '#c586c0' },
-    { id: 'reset_hard', name: '一忘皆空！', desc: '清空对方手牌，但对方随机落子补偿', weight: 10, color: '#dcdcaa' },
-    { id: 'random', name: '擒拿擒拿！', desc: '擒拿擒拿！随机生成4颗己方棋子', weight: 10, color: '#4ec9b0' },
-    { id: 'force_win', name: '欧皇降临', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d' }
+    { id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域3回合', weight: 30, color: '#f48771', icon: '⚡' },
+    { id: 'double', name: '再来一次！', desc: '连续下两个棋子 ', weight: 10, color: '#569cd6', icon: '✨' },
+    { id: 'shuffle', name: '两极反转！', desc: '打乱棋盘重排 会跳过你的回合', weight: 39, color: '#c586c0', icon: '🌀' },
+    { id: 'reset_hard', name: '一忘皆空！', desc: '清空对方手牌，但对方随机落子补偿', weight: 10, color: '#dcdcaa', icon: '🔥' },
+    { id: 'random', name: '擒拿擒拿！', desc: '随机生成4颗己方棋子', weight: 10, color: '#4ec9b0', icon: '🎲' },
+    { id: 'force_win', name: '欧皇降临', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d', icon: '👑' }
 ];
 
 let mySkills = [];
@@ -450,6 +586,32 @@ function showSkillEffect(skillName, subtext = "EXTENSION ACTIVATED") {
     
     overlay.appendChild(textDiv);
     setTimeout(() => { textDiv.remove(); }, 1600);
+}
+
+// 新增：显示获得卡片的 Toast 通知
+function showExtensionInstalledToast(skill) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+        <div class="toast-icon">${skill.icon || '📦'}</div>
+        <div class="toast-content">
+            <div class="toast-title">Extension Installed</div>
+            <div class="toast-desc">Extension '${skill.name}' is now active.</div>
+            <div class="toast-buttons">
+                <button class="toast-btn">Don't Show Again</button>
+                <button class="toast-btn" style="background:#3c3c3c;">Manage</button>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // 5秒后自动消失
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.5s forwards';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
 }
 
 // --- 模式选择 ---
@@ -901,7 +1063,7 @@ function evaluatePoint(index, role) {
 }
 
 // --- 技能逻辑 UI 更新 ---
-function renderSkillCards() {
+function renderSkillCards(newSkillIndex = -1) {
     const container = document.getElementById('skills-container');
     container.innerHTML = '';
     document.getElementById('skill-count').innerText = `${mySkills.length}/3`;
@@ -911,6 +1073,10 @@ function renderSkillCards() {
         card.className = 'skill-card';
         if (activeSkillMode && activeSkillMode.index === index) card.classList.add('active');
         if (skill.weight === 1) card.classList.add('ssr-card');
+        
+        // 如果是刚获得的新卡片，添加高亮类
+        if (index === newSkillIndex) card.classList.add('just-added');
+
         card.style.borderLeftColor = skill.color;
         
         card.innerHTML = `
@@ -953,7 +1119,10 @@ function autoDrawSkill(targetArray, renderUI) {
 
     targetArray.push(selectedSkill);
     if (renderUI) {
-        renderSkillCards();
+        // 传递新卡片的索引以触发侧边栏动画
+        renderSkillCards(targetArray.length - 1);
+        // 触发右下角 Toast 通知
+        showExtensionInstalledToast(selectedSkill);
         log(`已安装扩展: ${selectedSkill.name}`, 'success');
     } else {
         // 如果是AI抽卡，更新UI显示
