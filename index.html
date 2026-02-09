@@ -330,7 +330,8 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
             <div class="status-item">0 errors, 0 warnings</div>
         </div>
         <div class="status-right">
-            <!-- 增加回合显示 -->
+            <!-- 增加对手卡片显示 -->
+            <div class="status-item" id="opponent-cards" style="color: #f48771; font-weight:bold;">Opponent Cards: 0</div>
             <div class="status-item" id="turn-indicator" style="font-weight: bold; color: #fff;">⚫ Current: Black</div>
             <div class="status-item" id="date-status">2026-02-09</div>
             <div class="status-item" id="mode-status">Mode: Idle</div>
@@ -356,11 +357,12 @@ let voidTracker = []; // 结构: [{ index: 123, duration: 2 }]
 // --- 技能配置 ---
 // 修改这里的 name 会直接影响特效文字
 const SKILLS = [
-    { id: 'destroy', name: 'Git Revert', desc: '飞沙走石！移除对方棋子并封锁该区域1回合', weight: 20, color: '#f48771' },
-    { id: 'double', name: 'Async Await', desc: '连续下两子 (异步操作)', weight: 20, color: '#569cd6' },
-    { id: 'shuffle', name: 'Git Rebase', desc: '两极反转！打乱棋盘重排 (消耗回合)', weight: 30, color: '#c586c0' },
-    { id: 'reset_hard', name: 'Git Reset', desc: '清空对方手牌', weight: 15, color: '#dcdcaa' },
-    { id: 'random', name: 'Code Injection', desc: '擒拿擒拿！随机生成4颗己方棋子', weight: 5, color: '#4ec9b0' },
+    // 修改：将封锁时间改为3回合
+    { id: 'destroy', name: 'Git Revert', desc: '飞沙走石！移除对方棋子并封锁该区域3回合', weight: 30, color: '#f48771' },
+    { id: 'double', name: 'Async Await', desc: '连续下两子 (异步操作)', weight: 10, color: '#569cd6' },
+    { id: 'shuffle', name: 'Git Rebase', desc: '两极反转！打乱棋盘重排 (消耗回合)', weight: 39, color: '#c586c0' },
+    { id: 'reset_hard', name: 'Git Reset', desc: '清空对方手牌，但对方随机落子补偿', weight: 10, color: '#dcdcaa' },
+    { id: 'random', name: 'Code Injection', desc: '擒拿擒拿！随机生成4颗己方棋子', weight: 10, color: '#4ec9b0' },
     { id: 'force_win', name: 'Sudo Push', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d' }
 ];
 
@@ -414,6 +416,7 @@ function initBoard() {
     playerRoundCount = 0; // 重置计数
     aiRoundCount = 0;
     renderSkillCards();
+    updateOpponentCardCount(0); // 重置对手卡片显示
 }
 initBoard();
 
@@ -567,6 +570,9 @@ function handleNetworkData(data) {
             log(`对方使用了 [${data.skillName}]!`, 'error');
             endGame(data.winner);
             break;
+        case 'update_hand_count':
+            updateOpponentCardCount(data.count);
+            break;
         case 'restart':
             log("对方请求重新开始", 'info');
             resetGame();
@@ -577,15 +583,78 @@ function handleNetworkData(data) {
     }
 }
 
+// 新增：更新对手卡片数量显示
+function updateOpponentCardCount(count) {
+    document.getElementById('opponent-cards').innerText = `Opponent Cards: ${count}`;
+}
+
+// 发送自己的手牌数量给对方
+function broadcastHandCount() {
+    if (gameMode === 'pvp' && conn && conn.open) {
+        conn.send({ type: 'update_hand_count', count: mySkills.length });
+    }
+}
+
+// 修改：处理 Reset Hard 请求，增加随机补偿机制
 function handleResetHardRequest(nextTurn, skillName) {
     const lostCount = mySkills.length;
+    
     if (lostCount > 0) {
+        // 1. 清空手牌
         mySkills = [];
         renderSkillCards();
+        broadcastHandCount(); // 通知对方我没牌了
+        
         log(`[${skillName || 'Git Reset'}]: 丢失 ${lostCount} 张手牌`, 'error');
-        showSkillEffect(skillName || "GIT RESET", "STASH DROPPED");
+        showSkillEffect(skillName || "GIT RESET", `LOST ${lostCount} CARDS`);
+
+        // 2. 补偿机制：随机落子
+        setTimeout(() => {
+            log(`触发补偿机制: 随机生成 ${lostCount} 颗棋子`, 'info');
+            const emptyIndices = getEmptyIndices();
+            const targets = [];
+            
+            // 防止死循环，取最小值
+            const spawnCount = Math.min(lostCount, emptyIndices.length);
+            
+            for(let i=0; i<spawnCount; i++) {
+                const r = Math.floor(Math.random() * emptyIndices.length);
+                targets.push(emptyIndices[r]);
+                emptyIndices.splice(r, 1);
+            }
+
+            // 落子
+            targets.forEach(idx => applyMoveLocal(idx, myRole));
+            
+            // 如果是PVP，需要告诉对方我因为补偿机制落子了
+            if (gameMode === 'pvp' && conn) {
+                // 这里复用 multi_move 类型，但不需要 skillName，因为是被动触发
+                conn.send({ 
+                    type: 'multi_move', 
+                    indices: targets, 
+                    player: myRole, 
+                    nextTurn: nextTurn, // 保持原来的 nextTurn
+                    skillName: 'AUTO RECOVERY' 
+                });
+            }
+
+            // 检查是否因为补偿而获胜
+            let won = false;
+            for (let t of targets) { if (checkWin(t, myRole)) { won = true; break; } }
+            
+            if (won) {
+                endGame(myRole);
+                if (gameMode === 'pvp' && conn) conn.send({ type: 'force_win', winner: myRole, skillName: 'AUTO RECOVERY' });
+            } else {
+                handleTurnChange(nextTurn);
+            }
+
+        }, 1500); // 延迟一点执行，让玩家看清特效
+
+    } else {
+        log(`[${skillName}]: 对方试图清空手牌，但你空空如也`, 'info');
+        handleTurnChange(nextTurn);
     }
-    handleTurnChange(nextTurn);
 }
 
 // --- 回合管理 ---
@@ -594,18 +663,14 @@ function handleTurnChange(nextTurn) {
     currentTurn = nextTurn;
 
     // --- 新增逻辑：处理虚空格子的冷却时间 ---
-    // 每次回合变更，所有虚空格子的持续时间减 1
-    // 初始 duration 为 2，意味着：当前回合结束(-1) -> 对手回合结束(-1) -> 恢复
     for (let i = voidTracker.length - 1; i >= 0; i--) {
         voidTracker[i].duration--;
         if (voidTracker[i].duration <= 0) {
             const idx = voidTracker[i].index;
-            // 只有当该格子仍然是 VOID_STATE 时才恢复（防止被其他逻辑覆盖）
             if (boardState[idx] === VOID_STATE) {
                 boardState[idx] = 0; // 恢复为空
                 const cell = boardEl.children[idx];
                 cell.className = 'cell'; // 移除虚空样式
-                // log(`Cell ${idx} restored from void.`, 'info'); // 可选日志
             }
             voidTracker.splice(i, 1); // 从追踪器移除
         }
@@ -613,17 +678,12 @@ function handleTurnChange(nextTurn) {
     // ------------------------------------
 
     // 1. 玩家技能获取逻辑：每2回合一次
-    // 只有当轮到我，且不是连击中间态时
     if (currentTurn === myRole && prevTurn !== myRole) {
         log("轮到你的回合", 'info');
         
-        // 增加回合计数
         playerRoundCount++;
-        
-        // 更新UI显示进度
         renderSkillCards();
 
-        // 只有偶数回合 (2, 4, 6...) 获得技能
         if (playerRoundCount % 2 === 0) {
             setTimeout(() => {
                 log("扩展包下载完成 (每2回合)", 'success');
@@ -637,7 +697,6 @@ function handleTurnChange(nextTurn) {
         updateStatus();
         if (prevTurn !== 2) {
             aiRoundCount++;
-            // AI 也是每2回合获得一次
             if (aiRoundCount % 2 === 0) {
                 autoDrawSkill(aiSkills, false);
             }
@@ -662,6 +721,7 @@ function startGame(role) {
     // 如果是PvE，也给AI发一张，保持公平（可选）
     if (gameMode === 'pve') {
         autoDrawSkill(aiSkills, false);
+        updateOpponentCardCount(aiSkills.length);
     }
 
     let roleName = "";
@@ -681,7 +741,12 @@ function aiTurnLogic() {
     const aiRole = 2;
     const playerRole = 1;
 
-    if (aiTryUseSkill(aiRole, playerRole)) return;
+    // AI 尝试使用技能
+    if (aiTryUseSkill(aiRole, playerRole)) {
+        updateOpponentCardCount(aiSkills.length); // 更新AI手牌显示
+        return;
+    }
+    
     aiMakeMove(aiRole, playerRole);
 }
 
@@ -736,6 +801,17 @@ function aiTryUseSkill(aiRole, playerRole) {
             handleTurnChange(aiRole);
             return true;
         }
+    }
+
+    // Reset Hard (AI 对玩家使用)
+    const resetSkillIdx = aiSkills.findIndex(s => s.id === 'reset_hard');
+    if (resetSkillIdx !== -1 && mySkills.length >= 2 && Math.random() < 0.5) {
+        const skill = aiSkills[resetSkillIdx];
+        aiSkills.splice(resetSkillIdx, 1);
+        showSkillEffect(skill.name.toUpperCase(), "AI RESETTING YOU");
+        // 触发玩家侧的 Reset 逻辑
+        handleResetHardRequest(aiRole, skill.name);
+        return true;
     }
 
     // Double Move
@@ -857,6 +933,9 @@ function renderSkillCards() {
         statusText.innerText = `技能充能中: ${progress}/2 回合`;
         statusText.style.color = "#888";
     }
+    
+    // 每次渲染手牌都广播一次数量
+    broadcastHandCount();
 }
 
 function autoDrawSkill(targetArray, renderUI) {
@@ -876,6 +955,11 @@ function autoDrawSkill(targetArray, renderUI) {
     if (renderUI) {
         renderSkillCards();
         log(`已安装扩展: ${selectedSkill.name}`, 'success');
+    } else {
+        // 如果是AI抽卡，更新UI显示
+        if (gameMode === 'pve' && targetArray === aiSkills) {
+            updateOpponentCardCount(aiSkills.length);
+        }
     }
 }
 
@@ -970,8 +1054,28 @@ function executeInstantSkill(skill) {
         const nextTurnPlayer = (myRole === 1 ? 2 : 1);
         if (gameMode === 'pvp' && conn) conn.send({ type: 'reset_hard_request', nextTurn: nextTurnPlayer, skillName: skill.name });
         else if (gameMode === 'pve') {
+            // AI 逻辑：AI失去卡片，AI随机落子
+            const lostCount = aiSkills.length;
             aiSkills = [];
-            log("AI 手牌已清空", 'success');
+            updateOpponentCardCount(0);
+            
+            if (lostCount > 0) {
+                 log(`AI 丢失 ${lostCount} 张手牌，触发补偿机制`, 'warn');
+                 const emptyIndices = getEmptyIndices();
+                 const targets = [];
+                 const spawnCount = Math.min(lostCount, emptyIndices.length);
+                 for(let i=0; i<spawnCount; i++) {
+                    const r = Math.floor(Math.random() * emptyIndices.length);
+                    targets.push(emptyIndices[r]);
+                    emptyIndices.splice(r, 1);
+                 }
+                 // AI 落子 (2)
+                 targets.forEach(idx => applyMoveLocal(idx, 2));
+                 
+                 let won = false;
+                 for (let t of targets) { if (checkWin(t, 2)) { won = true; break; } }
+                 if (won) endGame(2);
+            }
         }
         handleTurnChange(nextTurnPlayer);
     }
@@ -1080,8 +1184,9 @@ function markCellAsVoid(index) {
     cell.innerHTML = ''; // 移除棋子
     cell.className = 'cell void'; // 添加虚空样式
     
-    // 记录到追踪器，duration = 2 (当前回合结束 + 对手回合结束 = 1个完整回合)
-    voidTracker.push({ index: index, duration: 2 });
+    // 修改：duration 设置为 4，确保能持续3个完整的回合交替
+    // 流程：释放(4) -> 对手(3) -> 我(2) -> 对手(1) -> 我(0,解锁)
+    voidTracker.push({ index: index, duration: 4 });
 }
 
 function handleRandomSpawn() {
