@@ -3,197 +3,314 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>main.js - Visual Studio Code</title>
+<title>main.js - Visual Studio Code (Gomoku Modified)</title>
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <style>
-/* --- VS Code 风格重置 --- */
-body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Consolas', 'Menlo', 'Monaco', monospace; background: #1e1e1e; color: #cccccc; user-select: none; }
+/* --- VS Code 风格重置 & 高级 UI --- */
+:root {
+    --bg-dark: #1e1e1e;
+    --bg-sidebar: #252526;
+    --bg-activity: #333333;
+    --bg-title: #3c3c3c;
+    --border-color: #454545;
+    --accent-blue: #007fd4;
+    --text-primary: #cccccc;
+    --text-highlight: #ffffff;
+    --grid-line: #2a2a2a;
+}
+
+body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace; background: var(--bg-dark); color: var(--text-primary); user-select: none; }
 * { box-sizing: border-box; }
 
 .vscode-container { display: flex; height: 100%; flex-direction: column; }
 
 /* 顶部标题栏 */
-.title-bar { height: 30px; background: #3c3c3c; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #cccccc; position: relative; }
+.title-bar { height: 30px; background: var(--bg-title); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #999; position: relative; border-bottom: 1px solid #2b2b2b; }
 .title-bar .traffic-lights { position: absolute; left: 10px; display: flex; gap: 8px; }
-.traffic-light { width: 12px; height: 12px; border-radius: 50%; }
+.traffic-light { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 2px rgba(0,0,0,0.3); }
 .close { background: #ff5f56; } .minimize { background: #ffbd2e; } .maximize { background: #27c93f; }
 
 /* 主体区域 */
 .workspace { flex: 1; display: flex; overflow: hidden; }
 
 /* 左侧活动栏 */
-.activity-bar { width: 50px; background: #333333; display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
-.activity-icon { width: 48px; height: 48px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.6; font-size: 24px; border-left: 2px solid transparent; }
-.activity-icon:hover, .activity-icon.active { opacity: 1; color: white; }
-.activity-icon.active { border-left-color: white; }
+.activity-bar { width: 48px; background: var(--bg-activity); display: flex; flex-direction: column; align-items: center; padding-top: 10px; z-index: 2; }
+.activity-icon { width: 48px; height: 48px; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0.5; font-size: 24px; border-left: 2px solid transparent; transition: 0.2s; }
+.activity-icon:hover, .activity-icon.active { opacity: 1; color: var(--text-highlight); }
+.activity-icon.active { border-left-color: var(--text-highlight); }
 
 /* 左侧侧边栏 */
-.sidebar { width: 250px; background: #252526; border-right: 1px solid #000; display: flex; flex-direction: column; }
-.sidebar-header { height: 35px; padding: 0 20px; display: flex; align-items: center; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-.sidebar-content { padding: 10px; font-size: 13px; display: flex; flex-direction: column; height: 100%; }
+.sidebar { width: 260px; background: var(--bg-sidebar); border-right: 1px solid #000; display: flex; flex-direction: column; transition: width 0.1s; }
+.sidebar-header { height: 35px; padding: 0 20px; display: flex; align-items: center; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #bbb; overflow: hidden; white-space: nowrap; }
+.sidebar-content { padding: 10px; font-size: 13px; display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
 
 /* 输入框与按钮 */
-.vscode-input { background: #3c3c3c; border: 1px solid #3c3c3c; color: #ccc; padding: 6px; width: 100%; margin-bottom: 10px; font-family: inherit; outline: none; }
-.vscode-input:focus { border-color: #007fd4; }
-.vscode-btn { background: #0e639c; color: white; border: none; padding: 6px 12px; cursor: pointer; width: 100%; margin-bottom: 5px; }
-.vscode-btn:hover { background: #1177bb; }
+.vscode-input { background: #3c3c3c; border: 1px solid transparent; color: #ccc; padding: 6px 8px; width: 100%; margin-bottom: 10px; font-family: inherit; outline: none; transition: border 0.2s; }
+.vscode-input:focus { border-color: var(--accent-blue); }
+.vscode-btn { background: var(--accent-blue); color: white; border: none; padding: 7px 12px; cursor: pointer; width: 100%; margin-bottom: 6px; font-size: 12px; transition: background 0.2s; text-align: left; display: flex; align-items: center; justify-content: center; }
+.vscode-btn:hover { background: #006ab1; }
 .vscode-btn:disabled { background: #4d4d4d; color: #888; cursor: not-allowed; }
+.btn-secondary { background: #3a3d41; }
+.btn-secondary:hover { background: #4e5257; }
+
+/* 分割线 */
+.separator { height: 1px; background: #454545; margin: 10px 0; }
 
 /* 日志区 */
-.status-log { margin-top: auto; color: #888; font-size: 12px; height: 150px; overflow-y: auto; white-space: pre-wrap; border-top: 1px solid #333; padding-top: 5px; }
-.log-item { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+.status-log { margin-top: auto; color: #888; font-size: 12px; height: 120px; overflow-y: auto; white-space: pre-wrap; border-top: 1px solid #333; padding-top: 5px; font-family: 'Consolas', monospace; }
+.log-item { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; animation: fadeIn 0.2s; }
 .log-success { color: #4ec9b0; }
 .log-error { color: #f48771; }
 .log-info { color: #569cd6; }
 .log-warn { color: #cca700; }
-.log-ssr { color: #d7ba7d; font-weight: bold; text-shadow: 0 0 2px #d7ba7d; } /* 金色传说 */
+.log-ssr { color: #d7ba7d; font-weight: bold; text-shadow: 0 0 5px rgba(215, 186, 125, 0.3); }
 
 /* 技能卡片区域 */
-.skill-section { margin-top: 20px; border: 1px solid #3c3c3c; padding: 10px; background: #2d2d2d; display: flex; flex-direction: column; min-height: 200px; }
-#skills-container { flex: 1; overflow-y: auto; margin-top: 5px; }
+.skill-section { margin-top: 10px; border: 1px solid #3c3c3c; padding: 0; background: #252526; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.skill-header { padding: 8px 10px; background: #2d2d2d; font-size: 11px; font-weight: bold; border-bottom: 1px solid #3c3c3c; display: flex; justify-content: space-between; }
+#skills-container { flex: 1; overflow-y: auto; padding: 5px; }
 
 .skill-card {
-background: #1e1e1e; border-left: 3px solid #c586c0; padding: 8px; margin-bottom: 5px;
-cursor: pointer; transition: 0.2s; position: relative;
-animation: slideIn 0.3s ease-out;
+    background: #2d2d2d; border-left: 3px solid #c586c0; padding: 8px; margin-bottom: 6px;
+    cursor: pointer; transition: all 0.2s; position: relative;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.skill-card:hover { background: #333; }
-.skill-card.active { border-left-color: #4ec9b0; background: #252526; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-.skill-card.ssr-card { border-left-color: #d7ba7d; background: #2d2a20; } /* 金卡样式 */
+.skill-card:hover { background: #383838; transform: translateX(2px); }
+.skill-card.active { border-left-color: #4ec9b0; background: #303031; box-shadow: 0 0 8px rgba(78, 201, 176, 0.2); }
+.skill-card.ssr-card { border-left-color: #d7ba7d; background: linear-gradient(90deg, #2d2a20, #252526); }
 
-.skill-name { font-weight: bold; color: #9cdcfe; margin-bottom: 4px; }
-.skill-desc { font-size: 11px; color: #888; }
+.skill-name { font-weight: bold; color: #9cdcfe; margin-bottom: 4px; font-size: 12px; display: flex; justify-content: space-between; }
+.skill-desc { font-size: 11px; color: #999; line-height: 1.3; }
 
 /* 编辑器区域 (棋盘) */
-.editor-group { flex: 1; background: #1e1e1e; display: flex; flex-direction: column; position: relative; }
-.tabs-header { height: 35px; background: #2d2d2d; display: flex; overflow-x: auto; }
-.tab { height: 100%; background: #1e1e1e; color: #fff; padding: 0 15px; display: flex; align-items: center; font-size: 13px; border-top: 1px solid #007fd4; min-width: 120px; }
-.tab-icon { margin-right: 6px; color: #f1e05a; }
+.editor-group { flex: 1; background: var(--bg-dark); display: flex; flex-direction: column; position: relative; }
+.tabs-header { height: 35px; background: #2d2d2d; display: flex; overflow-x: auto; border-bottom: 1px solid #111; }
+.tab { height: 100%; background: var(--bg-dark); color: #fff; padding: 0 15px; display: flex; align-items: center; font-size: 13px; border-top: 1px solid var(--accent-blue); min-width: 140px; border-right: 1px solid #252526; }
+.tab-icon { margin-right: 8px; color: #f1e05a; font-size: 14px; }
+.unsaved-dot { width: 8px; height: 8px; background: white; border-radius: 50%; margin-left: auto; display: none; }
 
-.editor-content { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; background: #1e1e1e; }
+.editor-body { flex: 1; display: flex; position: relative; overflow: hidden; }
+.gutter { width: 50px; background: var(--bg-dark); border-right: 1px solid #333; display: flex; flex-direction: column; align-items: flex-end; padding-top: 15px; padding-right: 10px; color: #5a5a5a; font-size: 12px; line-height: 30px; user-select: none; }
 
-/* 棋盘网格 */
+.editor-content { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; background: var(--bg-dark); overflow: auto; }
+
+/* 简约棋盘网格 */
 #board {
-display: grid;
-grid-template-columns: repeat(15, 30px);
-grid-template-rows: repeat(15, 30px);
-background: #2b2b2b; border: 1px solid #444; position: relative;
+    display: grid;
+    grid-template-columns: repeat(15, 30px);
+    grid-template-rows: repeat(15, 30px);
+    background: #1e1e1e;
+    position: relative;
+    padding: 10px;
 }
 
-.cell { width: 30px; height: 30px; position: relative; cursor: pointer; }
-.cell::before { content: ''; position: absolute; top: 14px; left: 0; width: 100%; height: 1px; background: #555; }
-.cell::after { content: ''; position: absolute; left: 14px; top: 0; height: 100%; width: 1px; background: #555; }
+.cell {
+    width: 30px; height: 30px;
+    position: relative; cursor: pointer;
+}
+
+/* 简约网格线：十字交叉风格 */
+.cell::before {
+    content: ''; position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 1px; background: var(--grid-line);
+    pointer-events: none;
+    z-index: 0;
+}
+.cell::after {
+    content: ''; position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 1px; background: var(--grid-line);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cell:hover::before, .cell:hover::after { background: #444; }
 
 /* 技能模式下的光标 */
 .destroy-mode .cell { cursor: crosshair; }
-.destroy-mode .cell:hover::before, .destroy-mode .cell:hover::after { background: #f48771; }
-
+.destroy-mode .cell:hover::before, .destroy-mode .cell:hover::after { background: #f48771; height: 2px; width: 2px; }
 .random-mode .cell { cursor: help; }
-.random-mode .cell:hover { background: rgba(78, 201, 176, 0.2); }
+.random-mode .cell:hover { background: rgba(78, 201, 176, 0.1); }
 
+/* 棋子样式升级 */
 .piece {
-width: 24px; height: 24px; border-radius: 50%; position: absolute; top: 3px; left: 3px; z-index: 2;
-box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    width: 20px; height: 20px; border-radius: 50%; position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+    z-index: 2;
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.6);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: popIn 0.2s forwards;
 }
-.piece.black { background: #000; border: 1px solid #333; }
-.piece.white { background: #dcdcdc; border: 1px solid #999; }
+@keyframes popIn { to { transform: translate(-50%, -50%) scale(1); } }
+
+.piece.black {
+    background: radial-gradient(circle at 35% 35%, #666, #111);
+    border: 1px solid #000;
+}
+.piece.white {
+    background: radial-gradient(circle at 35% 35%, #fff, #ddd);
+    border: 1px solid #999;
+}
 .piece.last::after {
-content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-width: 6px; height: 6px; background: red; border-radius: 50%;
+    content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 6px; height: 6px; background: #ff0044; border-radius: 50%;
+    box-shadow: 0 0 6px #ff0044;
 }
 
 /* 底部状态栏 */
-.status-bar { height: 22px; background: #007fd4; color: white; display: flex; align-items: center; padding: 0 10px; font-size: 12px; justify-content: space-between; }
+.status-bar { height: 22px; background: var(--accent-blue); color: white; display: flex; align-items: center; padding: 0 10px; font-size: 12px; justify-content: space-between; z-index: 5; }
 .status-left, .status-right { display: flex; gap: 15px; }
 .status-item { display: flex; align-items: center; gap: 5px; cursor: pointer; }
 
 /* 游戏结束遮罩 */
 #game-over-modal {
-position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-background: rgba(0,0,0,0.6); z-index: 10;
-display: none; justify-content: center; align-items: center; flex-direction: column;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 20;
+    display: none; justify-content: center; align-items: center; flex-direction: column;
 }
 .modal-box {
-background: #252526; border: 1px solid #454545; padding: 20px;
-box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center;
+    background: #252526; border: 1px solid #454545; padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
+    border-radius: 4px; min-width: 300px;
 }
-.modal-title { font-size: 18px; margin-bottom: 10px; color: #fff; }
+.modal-title { font-size: 24px; margin-bottom: 20px; color: #fff; font-weight: 300; }
+
+/* --- 技能释放特效 --- */
+#skill-effect-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; display: flex; justify-content: center; align-items: center;
+    z-index: 15; overflow: hidden;
+}
+.skill-flash-text {
+    font-size: 40px; font-weight: 900; color: #fff;
+    text-transform: uppercase; letter-spacing: 5px;
+    text-shadow: 0 0 10px rgba(0, 127, 212, 0.8), 0 0 20px rgba(0, 127, 212, 0.5);
+    opacity: 0; transform: scale(0.5);
+    font-family: 'Arial Black', sans-serif;
+    text-align: center;
+}
+.skill-flash-text.animate {
+    animation: skillFlash 1.5s ease-out forwards;
+}
+@keyframes skillFlash {
+    0% { opacity: 0; transform: scale(0.5) translateY(20px); filter: blur(10px); }
+    10% { opacity: 1; transform: scale(1.1) translateY(0); filter: blur(0); }
+    20% { transform: scale(1); }
+    80% { opacity: 1; transform: scale(1); filter: blur(0); }
+    100% { opacity: 0; transform: scale(1.2); filter: blur(20px); }
+}
+.skill-subtext {
+    font-size: 14px; font-weight: normal; color: #4ec9b0; margin-top: 10px; letter-spacing: 2px;
+}
+
 </style>
 </head>
 <body>
 
 <div class="vscode-container">
-<div class="title-bar">
-<div class="traffic-lights"><div class="traffic-light close"></div><div class="traffic-light minimize"></div><div class="traffic-light maximize"></div></div>
-<span>main.js - Visual Studio Code</span>
-</div>
+    <div class="title-bar">
+        <div class="traffic-lights"><div class="traffic-light close"></div><div class="traffic-light minimize"></div><div class="traffic-light maximize"></div></div>
+        <span>main.js - Visual Studio Code (AI Powered)</span>
+    </div>
 
-<div class="workspace">
-<div class="activity-bar">
-<div class="activity-icon" title="资源管理器">📄</div>
-<div class="activity-icon" title="搜索">🔍</div>
-<div class="activity-icon active" title="源代码管理 (联机)">🌱</div>
-<div class="activity-icon" title="扩展 (技能)">🧩</div>
-</div>
+    <div class="workspace">
+        <div class="activity-bar">
+            <div class="activity-icon active" title="资源管理器">📄</div>
+            <div class="activity-icon" title="搜索">🔍</div>
+            <div class="activity-icon" title="源代码管理">🌱</div>
+            <div class="activity-icon" title="调试">🐞</div>
+            <div class="activity-icon" title="扩展">🧩</div>
+        </div>
 
-<div class="sidebar">
-<div class="sidebar-header">SOURCE CONTROL: GIT</div>
-<div class="sidebar-content">
-<div style="margin-bottom: 15px;">
-<label style="display:block; margin-bottom:5px; color:#bbb;">你的昵称 / ID</label>
-<input type="text" id="my-id-input" class="vscode-input" placeholder="输入房间号 (如: 101)">
-</div>
+        <div class="sidebar">
+            <div class="sidebar-header">EXPLORER: GOMOKU PROJECT</div>
+            <div class="sidebar-content">
 
-<button id="btn-host" class="vscode-btn" onclick="createGame()">创建主机 (执黑)</button>
-<button id="btn-join" class="vscode-btn" style="background:#3a3d41;" onclick="joinGame()">连接主机 (执白)</button>
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size:11px; font-weight:bold; color:#bbb; margin-bottom:5px;">GAME MODES</div>
+                    <button id="btn-pve" class="vscode-btn" onclick="startPvE()">
+                        <span>🤖 VS Code AI (单机)</span>
+                    </button>
+                </div>
 
-<!-- 技能区域 -->
-<div class="skill-section">
-<div style="font-weight:bold; margin-bottom:5px; font-size:11px;">EXTENSIONS (SKILLS)</div>
-<div id="skill-status-text" style="font-size:12px; color:#888; margin-bottom:5px;">回合开始自动获得技能</div>
+                <div class="separator"></div>
 
-<!-- 技能卡片容器 -->
-<div id="skills-container"></div>
-</div>
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size:11px; font-weight:bold; color:#bbb; margin-bottom:5px;">MULTIPLAYER (P2P)</div>
+                    <input type="text" id="my-id-input" class="vscode-input" placeholder="输入房间号 (如: 101)">
+                    <button id="btn-host" class="vscode-btn btn-secondary" onclick="createGame()">创建主机 (执黑)</button>
+                    <button id="btn-join" class="vscode-btn btn-secondary" onclick="joinGame()">连接主机 (执白)</button>
+                </div>
 
-<button id="btn-restart" class="vscode-btn" style="background:#8f0e0e; margin-top:auto; display:none;" onclick="requestRestart()">重新开始</button>
+                <!-- 技能区域 -->
+                <div class="skill-section">
+                    <div class="skill-header">
+                        <span>INSTALLED EXTENSIONS</span>
+                        <span id="skill-count" style="font-weight:normal;">0/3</span>
+                    </div>
+                    <div id="skill-status-text" style="padding:5px 10px; font-size:11px; color:#888; border-bottom:1px solid #333;">
+                        每2回合自动获得技能
+                    </div>
+                    <!-- 技能卡片容器 -->
+                    <div id="skills-container"></div>
+                </div>
 
-<div class="status-log" id="log-box">
-<div class="log-item log-info">欢迎使用 VS Code Gomoku</div>
-</div>
-</div>
-</div>
+                <button id="btn-restart" class="vscode-btn" style="background:#8f0e0e; margin-top:10px; display:none;" onclick="requestRestart()">重新开始</button>
 
-<div class="editor-group">
-<div class="tabs-header">
-<div class="tab"><span class="tab-icon">JS</span>main.js<span style="margin-left: 10px; font-size: 14px;">×</span></div>
-</div>
-<div class="editor-content">
-<div id="board"><!-- Generated by JS --></div>
-<div id="game-over-modal">
-<div class="modal-box">
-<div class="modal-title" id="winner-text">游戏结束</div>
-<button class="vscode-btn" onclick="requestRestart()">再来一局</button>
-</div>
-</div>
-</div>
-</div>
-</div>
+                <div class="status-log" id="log-box">
+                    <div class="log-item log-info">VS Code Gomoku Engine Ready.</div>
+                    <div class="log-item log-info">Select a mode to start.</div>
+                </div>
+            </div>
+        </div>
 
-<div class="status-bar">
-<div class="status-left">
-<div class="status-item">master*</div>
-<div class="status-item">0 errors, 0 warnings</div>
-</div>
-<div class="status-right">
-<div class="status-item" id="date-status">2026-02-09</div>
-<div class="status-item" id="turn-status">未连接</div>
-<div class="status-item" id="role-status">Role: None</div>
-<div class="status-item">JavaScript</div>
-</div>
-</div>
+        <div class="editor-group">
+            <div class="tabs-header">
+                <div class="tab"><span class="tab-icon">JS</span>main.js<span class="unsaved-dot"></span><span style="margin-left: 10px; font-size: 14px; color:#999;">×</span></div>
+            </div>
+            <div class="editor-body">
+                <!-- 模拟行号 -->
+                <div class="gutter" id="gutter">
+                    <!-- JS 生成行号 -->
+                </div>
+                <div class="editor-content">
+                    <div id="board"><!-- Generated by JS --></div>
+
+                    <!-- 技能特效层 -->
+                    <div id="skill-effect-overlay"></div>
+
+                    <div id="game-over-modal">
+                        <div class="modal-box">
+                            <div class="modal-title" id="winner-text">游戏结束</div>
+                            <button class="vscode-btn" onclick="requestRestart()">再来一局</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item"><span style="font-size:14px;">⚡</span> master*</div>
+            <div class="status-item">0 errors, 0 warnings</div>
+        </div>
+        <div class="status-right">
+            <!-- 增加回合显示 -->
+            <div class="status-item" id="turn-indicator" style="font-weight: bold; color: #fff;">⚫ Current: Black</div>
+            <div class="status-item" id="date-status">2026-02-09</div>
+            <div class="status-item" id="mode-status">Mode: Idle</div>
+            <div class="status-item" id="turn-status">Waiting</div>
+            <div class="status-item">JavaScript</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -203,22 +320,26 @@ let boardState = Array(BOARD_SIZE * BOARD_SIZE).fill(0);
 let myRole = 0; // 1:黑, 2:白
 let currentTurn = 1;
 let isGameActive = false;
+let gameMode = 'none'; // 'pve' or 'pvp'
 
-// --- 技能配置 (修改处：调整权重以容纳 1% 的必胜卡) ---
-// 总权重 = 50 + 25 + 10 + 9 + 5 + 1 = 100
+// --- 技能配置 ---
 const SKILLS = [
-{ id: 'destroy', name: 'Git Revert', desc: '移除对方一颗棋子，并且你可以继续落子', weight: 50 }, // 50%
-{ id: 'double', name: 'Double Await', desc: '连续下两子 (异步操作)', weight: 25 }, // 25%
-{ id: 'shuffle', name: 'Git Rebase', desc: '打乱棋盘，且你可以继续落子 (重写历史)', weight: 10 }, // 10%
-{ id: 'reset_hard', name: 'Git Reset --hard', desc: '清空对方所有手牌 (强制回退)', weight: 9 }, // 9%
-{ id: 'random', name: 'Code Injection', desc: '随机生成4颗己方棋子 (注入依赖)', weight: 5 }, // 5%
-// --- 新增：必胜卡 ---
-{ id: 'force_win', name: 'Git Push --force', desc: '直接获胜 (SSR: 强制提交)', weight: 1 } // 1%
+    { id: 'destroy', name: 'Git Revert', desc: '飞沙走石！移除对方一颗棋子', weight: 20, color: '#f48771' },
+    { id: 'double', name: 'Async Await', desc: '连续下两子 (异步操作)', weight: 20, color: '#569cd6' },
+    { id: 'shuffle', name: 'Git Rebase', desc: '两极反转！打乱棋盘重排 (消耗回合)', weight: 30, color: '#c586c0' },
+    { id: 'reset_hard', name: 'Git Reset', desc: '清空对方手牌', weight: 15, color: '#dcdcaa' },
+    { id: 'random', name: 'Code Injection', desc: '擒拿擒拿！随机生成4颗己方棋子', weight: 5, color: '#4ec9b0' },
+    { id: 'force_win', name: 'Sudo Push', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d' }
 ];
 
-let mySkills = []; // 当前持有的技能数组
-let activeSkillMode = null; // 当前激活的技能对象 {id, index}
-let doubleMoveCount = 0; // 连下两子剩余次数
+let mySkills = [];
+let aiSkills = [];
+let activeSkillMode = null;
+let doubleMoveCount = 0;
+
+// 新增：回合计数器，用于每2回合发技能
+let playerRoundCount = 0;
+let aiRoundCount = 0;
 
 // --- 网络配置 ---
 let peer = null;
@@ -227,602 +348,803 @@ let myPeerId = null;
 
 // --- 初始化 ---
 const boardEl = document.getElementById('board');
+const gutterEl = document.getElementById('gutter');
+
 function initBoard() {
-boardEl.innerHTML = '';
-boardEl.className = '';
-boardState.fill(0);
-for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-const cell = document.createElement('div');
-cell.className = 'cell';
-cell.dataset.index = i;
-cell.onclick = () => handleCellClick(i);
-boardEl.appendChild(cell);
-}
-document.getElementById('game-over-modal').style.display = 'none';
+    boardEl.innerHTML = '';
+    boardEl.className = '';
+    boardState.fill(0);
 
-// 技能重置
-mySkills = [];
-activeSkillMode = null;
+    // 生成棋盘
+    for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        cell.onclick = () => handleCellClick(i);
+        boardEl.appendChild(cell);
+    }
 
-renderSkillCards();
+    // 生成行号
+    gutterEl.innerHTML = '';
+    for(let i=1; i<=30; i++) {
+        const line = document.createElement('div');
+        line.innerText = i;
+        gutterEl.appendChild(line);
+    }
+
+    document.getElementById('game-over-modal').style.display = 'none';
+    mySkills = [];
+    aiSkills = [];
+    activeSkillMode = null;
+    playerRoundCount = 0; // 重置计数
+    aiRoundCount = 0;
+    renderSkillCards();
 }
 initBoard();
 
 // 更新时间显示
 setInterval(() => {
-const now = new Date();
-const timeStr = now.toLocaleTimeString();
-document.getElementById('date-status').innerText = `2026-02-09 ${timeStr}`;
+    const now = new Date();
+    // 保持日期为2026-02-09，只更新时间
+    document.getElementById('date-status').innerText = `2026-02-09 ${now.toLocaleTimeString()}`;
 }, 1000);
 
 function log(msg, type = 'info') {
-const box = document.getElementById('log-box');
-const div = document.createElement('div');
-div.className = `log-item log-${type}`;
-div.innerText = `[System] ${msg}`;
-box.appendChild(div);
-box.scrollTop = box.scrollHeight;
+    const box = document.getElementById('log-box');
+    const div = document.createElement('div');
+    div.className = `log-item log-${type}`;
+    div.innerText = `> ${msg}`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
 }
 
-// --- PeerJS ---
+function showSkillEffect(skillName, subtext = "EXTENSION ACTIVATED") {
+    const overlay = document.getElementById('skill-effect-overlay');
+    overlay.innerHTML = '';
+
+    const textDiv = document.createElement('div');
+    textDiv.className = 'skill-flash-text animate';
+    textDiv.innerHTML = `
+        <div>${skillName}</div>
+        <div class="skill-subtext">${subtext}</div>
+    `;
+
+    overlay.appendChild(textDiv);
+    setTimeout(() => { textDiv.remove(); }, 1600);
+}
+
+// --- 模式选择 ---
+function startPvE() {
+    if(isGameActive) if(!confirm("当前正在游戏中，确定要重新开始吗？")) return;
+    if(conn) { conn.close(); conn = null; }
+
+    gameMode = 'pve';
+    document.getElementById('mode-status').innerText = "Mode: AI (PvE)";
+    document.getElementById('btn-restart').style.display = 'block';
+
+    startGame(1);
+}
+
+// --- PeerJS (PvP) ---
 function initPeer(customId) {
-const config = { debug: 1 };
-peer = customId ? new Peer(customId, config) : new Peer(null, config);
+    const config = { debug: 1 };
+    peer = customId ? new Peer(customId, config) : new Peer(null, config);
 
-peer.on('open', (id) => {
-myPeerId = id;
-log(`ID已生成: ${id}`, 'success');
-document.getElementById('role-status').innerText = `ID: ${id}`;
-document.getElementById('my-id-input').disabled = true;
-document.getElementById('btn-host').disabled = true;
-document.getElementById('btn-join').disabled = true;
-});
+    peer.on('open', (id) => {
+        myPeerId = id;
+        log(`ID已生成: ${id}`, 'success');
+        document.getElementById('mode-status').innerText = `ID: ${id}`;
+        document.getElementById('my-id-input').disabled = true;
+        document.getElementById('btn-host').disabled = true;
+        document.getElementById('btn-join').disabled = true;
+    });
 
-peer.on('error', (err) => {
-log(`错误: ${err.type}`, 'error');
-if(err.type === 'unavailable-id') alert("ID被占用");
-});
+    peer.on('error', (err) => {
+        log(`错误: ${err.type}`, 'error');
+        if(err.type === 'unavailable-id') alert("ID被占用");
+    });
 
-peer.on('connection', (c) => {
-if (conn) { c.close(); return; }
-conn = c;
-setupConnection();
-log(`客户端 ${c.peer} 已连接`, 'success');
-startGame(1);
-});
+    peer.on('connection', (c) => {
+        if (conn) { c.close(); return; }
+        conn = c;
+        setupConnection();
+        log(`客户端 ${c.peer} 已连接`, 'success');
+        gameMode = 'pvp';
+        startGame(1);
+    });
 }
 
 function createGame() {
-const id = document.getElementById('my-id-input').value.trim();
-if (!id) return alert("请输入房间号");
-initPeer(id);
-log("正在创建主机...", 'info');
+    const id = document.getElementById('my-id-input').value.trim();
+    if (!id) return alert("请输入房间号");
+    initPeer(id);
+    log("正在创建主机...", 'info');
 }
 
 function joinGame() {
-const hostId = document.getElementById('my-id-input').value.trim();
-if (!hostId) return alert("请输入主机ID");
-initPeer(null);
-const checkOpen = setInterval(() => {
-if (peer && !peer.disconnected && !peer.destroyed && myPeerId) {
-clearInterval(checkOpen);
-log(`正在连接 ${hostId}...`, 'info');
-conn = peer.connect(hostId);
-setupConnection();
-}
-}, 200);
+    const hostId = document.getElementById('my-id-input').value.trim();
+    if (!hostId) return alert("请输入主机ID");
+    initPeer(null);
+    const checkOpen = setInterval(() => {
+        if (peer && !peer.disconnected && !peer.destroyed && myPeerId) {
+            clearInterval(checkOpen);
+            log(`正在连接 ${hostId}...`, 'info');
+            conn = peer.connect(hostId);
+            setupConnection();
+        }
+    }, 200);
 }
 
 function setupConnection() {
-document.getElementById('btn-restart').style.display = 'block';
+    document.getElementById('btn-restart').style.display = 'block';
+    gameMode = 'pvp';
 
-conn.on('open', () => {
-log("连接建立成功！", 'success');
-if (myRole === 0) startGame(2);
-});
+    conn.on('open', () => {
+        log("连接建立成功！", 'success');
+        if (myRole === 0) startGame(2);
+    });
 
-conn.on('data', (data) => {
-handleNetworkData(data);
-});
+    conn.on('data', (data) => {
+        handleNetworkData(data);
+    });
 
-conn.on('close', () => {
-log("连接已断开", 'error');
-alert("对方已断开连接");
-location.reload();
-});
+    conn.on('close', () => {
+        log("连接已断开", 'error');
+        alert("对方已断开连接");
+        location.reload();
+    });
 }
 
 function handleNetworkData(data) {
-switch (data.type) {
-case 'move':
-applyMoveLocal(data.index, data.player);
-handleTurnChange(data.nextTurn);
-break;
-case 'multi_move':
-data.indices.forEach(idx => applyMoveLocal(idx, data.player));
-handleTurnChange(data.nextTurn);
-log("对方使用了 [Code Injection] 随机生成了棋子!", 'warn');
-break;
-case 'remove':
-removePieceLocal(data.index);
-handleTurnChange(data.nextTurn);
-log("对方使用了 [Git Revert] 移除了你的棋子!", 'warn');
-break;
-case 'shuffle_board':
-boardState = data.newState;
-refreshBoardUI();
-handleTurnChange(data.nextTurn);
-log("对方使用了 [Git Rebase] 打乱了整个棋盘!", 'warn');
-checkFullBoardWin();
-break;
-case 'reset_hard_request':
-handleResetHardRequest(data.nextTurn);
-break;
-// --- 新增：处理必胜卡 ---
-case 'force_win':
-log("对方使用了 [Git Push --force] 强行覆盖了代码！", 'error');
-endGame(data.winner);
-break;
-// --- 结束 ---
-case 'chat':
-log(data.msg, 'warn');
-break;
-case 'restart':
-log("对方请求重新开始", 'info');
-resetGame();
-break;
-}
+    if(data.skillName) {
+        showSkillEffect(data.skillName, "REMOTE EXECUTION");
+    }
+
+    switch (data.type) {
+        case 'move':
+            applyMoveLocal(data.index, data.player);
+            handleTurnChange(data.nextTurn);
+            break;
+        case 'multi_move':
+            data.indices.forEach(idx => applyMoveLocal(idx, data.player));
+            handleTurnChange(data.nextTurn);
+            log("对方使用了 [Code Injection]!", 'warn');
+            break;
+        case 'remove':
+            removePieceLocal(data.index);
+            handleTurnChange(data.nextTurn);
+            log("对方使用了 [Git Revert]!", 'warn');
+            break;
+        case 'shuffle_board':
+            boardState = data.newState;
+            refreshBoardUI();
+            handleTurnChange(data.nextTurn);
+            log("对方使用了 [Git Rebase]!", 'warn');
+            checkFullBoardWin();
+            break;
+        case 'reset_hard_request':
+            handleResetHardRequest(data.nextTurn);
+            break;
+        case 'force_win':
+            log("对方使用了 [Sudo Push]!", 'error');
+            endGame(data.winner);
+            break;
+        case 'restart':
+            log("对方请求重新开始", 'info');
+            resetGame();
+            break;
+        case 'chat':
+            log(`[Chat]: ${data.msg}`, 'info');
+            break;
+    }
 }
 
 function handleResetHardRequest(nextTurn) {
-const lostCount = mySkills.length;
-if (lostCount > 0) {
-mySkills = [];
-renderSkillCards();
-log(`对方使用了 [Git Reset --hard]，你的 ${lostCount} 张手牌全被丢弃了！`, 'error');
-} else {
-log("对方使用了 [Git Reset --hard]，但你本来就没有手牌。", 'info');
-}
-handleTurnChange(nextTurn);
+    const lostCount = mySkills.length;
+    if (lostCount > 0) {
+        mySkills = [];
+        renderSkillCards();
+        log(`[Git Reset]: 丢失 ${lostCount} 张手牌`, 'error');
+        showSkillEffect("GIT RESET", "STASH DROPPED");
+    }
+    handleTurnChange(nextTurn);
 }
 
-// --- 修复后的回合切换逻辑 ---
+// --- 回合管理 (核心修改) ---
 function handleTurnChange(nextTurn) {
-const prevTurn = currentTurn; // 记录上一回合是谁
-currentTurn = nextTurn;
+    const prevTurn = currentTurn;
+    currentTurn = nextTurn;
 
-if (currentTurn === myRole) {
-// 修复 Bug:
-// 只有当回合权真正发生交替（从对方转给我）时，才抽卡。
-// 如果上一回合也是我（说明是 Double Await 的连击中间态），则不抽卡。
-if (prevTurn !== myRole) {
-log("轮到你的回合", 'info');
-setTimeout(() => {
-autoDrawSkill();
-}, 500);
-}
-}
-updateStatus();
+    // 1. 玩家技能获取逻辑：每2回合一次
+    // 只有当轮到我，且不是连击中间态时
+    if (currentTurn === myRole && prevTurn !== myRole) {
+        log("轮到你的回合", 'info');
+        
+        // 增加回合计数
+        playerRoundCount++;
+        
+        // 更新UI显示进度
+        renderSkillCards();
+
+        // 只有偶数回合 (2, 4, 6...) 获得技能
+        if (playerRoundCount % 2 === 0) {
+            setTimeout(() => {
+                log("扩展包下载完成 (每2回合)", 'success');
+                autoDrawSkill(mySkills, true);
+            }, 500);
+        }
+    }
+
+    // 2. PvE AI 逻辑
+    if (gameMode === 'pve' && currentTurn === 2) {
+        updateStatus();
+        if (prevTurn !== 2) {
+            aiRoundCount++;
+            // AI 也是每2回合获得一次
+            if (aiRoundCount % 2 === 0) {
+                autoDrawSkill(aiSkills, false);
+            }
+        }
+        setTimeout(aiTurnLogic, 1000);
+    } else {
+        updateStatus();
+    }
 }
 
-// --- 游戏逻辑 ---
+// --- 游戏核心逻辑 ---
 function startGame(role) {
-myRole = role;
-currentTurn = 1;
-isGameActive = true;
-resetGame(false);
+    myRole = role;
+    currentTurn = 1;
+    isGameActive = true;
+    resetGame(false);
 
-const roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
-document.getElementById('role-status').innerText = `Role: ${roleName}`;
-log(`游戏开始，你执 ${roleName}`, 'success');
+    // --- 修改点：初始赠送一张技能卡 ---
+    log("正在预加载扩展包...", 'info');
+    autoDrawSkill(mySkills, true);
+    
+    // 如果是PvE，也给AI发一张，保持公平（可选）
+    if (gameMode === 'pve') {
+        autoDrawSkill(aiSkills, false);
+    }
+    // --------------------------------
 
-if (myRole === 1) {
-setTimeout(() => {
-autoDrawSkill();
-}, 500);
+    let roleName = "";
+    if (gameMode === 'pve') {
+        roleName = "玩家 (执黑)";
+    } else {
+        roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
+    }
+
+    log(`游戏开始: ${roleName}`, 'success');
+    updateStatus();
 }
-updateStatus();
+
+// --- AI 逻辑 (PvE) ---
+function aiTurnLogic() {
+    if (!isGameActive) return;
+    const aiRole = 2;
+    const playerRole = 1;
+
+    if (aiTryUseSkill(aiRole, playerRole)) return;
+    aiMakeMove(aiRole, playerRole);
 }
 
-// --- 技能逻辑 ---
+function aiTryUseSkill(aiRole, playerRole) {
+    if (aiSkills.length === 0) return false;
+
+    // Force Win
+    const winSkillIdx = aiSkills.findIndex(s => s.id === 'force_win');
+    if (winSkillIdx !== -1) {
+        aiSkills.splice(winSkillIdx, 1);
+        showSkillEffect("SUDO PUSH", "AI OVERRIDE");
+        endGame(aiRole);
+        return true;
+    }
+
+    // Code Injection
+    const randomSkillIdx = aiSkills.findIndex(s => s.id === 'random');
+    if (randomSkillIdx !== -1 && Math.random() < 0.3) {
+        aiSkills.splice(randomSkillIdx, 1);
+        showSkillEffect("CODE INJECTION", "AI GENERATING...");
+        const emptyIndices = getEmptyIndices();
+        if (emptyIndices.length >= 4) {
+            const targets = [];
+            for(let i=0; i<4; i++) {
+                const r = Math.floor(Math.random() * emptyIndices.length);
+                targets.push(emptyIndices[r]);
+                emptyIndices.splice(r, 1);
+            }
+            targets.forEach(idx => applyMoveLocal(idx, aiRole));
+            let won = false;
+            for (let t of targets) { if (checkWin(t, aiRole)) { won = true; break; } }
+            if (won) endGame(aiRole);
+            else handleTurnChange(playerRole);
+            return true;
+        }
+    }
+
+    // Destroy
+    const destroySkillIdx = aiSkills.findIndex(s => s.id === 'destroy');
+    if (destroySkillIdx !== -1 && Math.random() < 0.3) {
+        const playerPieces = [];
+        boardState.forEach((v, i) => { if(v === playerRole) playerPieces.push(i); });
+        if (playerPieces.length > 0) {
+            aiSkills.splice(destroySkillIdx, 1);
+            const target = playerPieces[Math.floor(Math.random() * playerPieces.length)];
+            removePieceLocal(target);
+            showSkillEffect("GIT REVERT", "AI ROLLEDBACK CHANGES");
+            handleTurnChange(aiRole);
+            return true;
+        }
+    }
+
+    // Double Move
+    const doubleSkillIdx = aiSkills.findIndex(s => s.id === 'double');
+    if (doubleSkillIdx !== -1 && Math.random() < 0.3) {
+        aiSkills.splice(doubleSkillIdx, 1);
+        showSkillEffect("ASYNC AWAIT", "AI DOUBLE COMMIT");
+        aiMakeMove(aiRole, aiRole);
+        setTimeout(() => { if(isGameActive) aiMakeMove(aiRole, playerRole); }, 800);
+        return true;
+    }
+
+    return false;
+}
+
+function aiMakeMove(aiRole, nextTurnPlayer) {
+    let bestScore = -Infinity;
+    let bestMoves = [];
+    const emptyCells = getEmptyIndices();
+
+    if (emptyCells.length === 0) return;
+
+    if (emptyCells.length === BOARD_SIZE * BOARD_SIZE - 1) {
+        const center = Math.floor(BOARD_SIZE * BOARD_SIZE / 2);
+        applyMoveLocal(center, aiRole);
+        handleTurnChange(nextTurnPlayer);
+        return;
+    }
+
+    for (let index of emptyCells) {
+        let attackScore = evaluatePoint(index, aiRole);
+        let defenseScore = evaluatePoint(index, 1);
+        let totalScore = attackScore + (defenseScore * 1.1);
+
+        if (totalScore > bestScore) {
+            bestScore = totalScore;
+            bestMoves = [index];
+        } else if (totalScore === bestScore) {
+            bestMoves.push(index);
+        }
+    }
+
+    const finalMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    applyMoveLocal(finalMove, aiRole);
+
+    if (checkWin(finalMove, aiRole)) {
+        endGame(aiRole);
+    } else {
+        handleTurnChange(nextTurnPlayer);
+    }
+}
+
+function getEmptyIndices() {
+    const arr = [];
+    for(let i=0; i<boardState.length; i++) if(boardState[i] === 0) arr.push(i);
+    return arr;
+}
+
+function evaluatePoint(index, role) {
+    const x = index % BOARD_SIZE;
+    const y = Math.floor(index / BOARD_SIZE);
+    let score = 0;
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+
+    for (let [dx, dy] of directions) {
+        let count = 1; let blocked = 0;
+        for (let i = 1; i < 5; i++) {
+            const nx = x + dx * i, ny = y + dy * i;
+            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) { blocked++; break; }
+            const val = boardState[ny * BOARD_SIZE + nx];
+            if (val === role) count++; else if (val !== 0) { blocked++; break; } else break;
+        }
+        for (let i = 1; i < 5; i++) {
+            const nx = x - dx * i, ny = y - dy * i;
+            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) { blocked++; break; }
+            const val = boardState[ny * BOARD_SIZE + nx];
+            if (val === role) count++; else if (val !== 0) { blocked++; break; } else break;
+        }
+        if (count >= 5) score += 100000;
+        else if (count === 4) score += (blocked === 0 ? 10000 : 1000);
+        else if (count === 3) score += (blocked === 0 ? 1000 : 100);
+        else if (count === 2) score += (blocked === 0 ? 100 : 0);
+    }
+    return score;
+}
+
+// --- 技能逻辑 UI 更新 ---
 function renderSkillCards() {
-const container = document.getElementById('skills-container');
-container.innerHTML = '';
+    const container = document.getElementById('skills-container');
+    container.innerHTML = '';
+    document.getElementById('skill-count').innerText = `${mySkills.length}/3`;
 
-mySkills.forEach((skill, index) => {
-const card = document.createElement('div');
-card.className = 'skill-card';
-if (activeSkillMode && activeSkillMode.index === index) {
-card.classList.add('active');
-}
-// 为SSR卡添加特殊样式
-if (skill.weight === 1) {
-card.classList.add('ssr-card');
-}
+    mySkills.forEach((skill, index) => {
+        const card = document.createElement('div');
+        card.className = 'skill-card';
+        if (activeSkillMode && activeSkillMode.index === index) card.classList.add('active');
+        if (skill.weight === 1) card.classList.add('ssr-card');
+        card.style.borderLeftColor = skill.color;
 
-card.innerHTML = `
-<div class="skill-name" style="${skill.weight === 1 ? 'color:#d7ba7d' : ''}">${skill.name}</div>
-<div class="skill-desc">${skill.desc}</div>
-<div style="font-size:10px; color:#666; margin-top:3px;">点击使用</div>
-`;
+        card.innerHTML = `
+            <div class="skill-name" style="color:${skill.color}">
+                ${skill.name} <span style="font-weight:normal; opacity:0.7;">v${skill.weight}</span>
+            </div>
+            <div class="skill-desc">${skill.desc}</div>
+        `;
+        card.onclick = () => activateSkill(index);
+        container.appendChild(card);
+    });
 
-card.onclick = () => activateSkill(index);
-container.appendChild(card);
-});
-
-const statusText = document.getElementById('skill-status-text');
-if (mySkills.length >= 3) {
-statusText.innerText = `手牌已满 (3/3)`;
-statusText.style.color = '#f48771';
-} else {
-statusText.innerText = `当前手牌 (${mySkills.length}/3) - 回合开始自动抽取`;
-statusText.style.color = '#888';
-}
-}
-
-function autoDrawSkill() {
-if (!isGameActive) return;
-
-if (mySkills.length >= 3) {
-log("手牌已满 (3/3)，本回合跳过抽卡", 'warn');
-return;
+    // 更新技能状态文本：显示充能进度
+    const statusText = document.getElementById('skill-status-text');
+    if (mySkills.length >= 3) {
+        statusText.innerText = "扩展插槽已满 (3/3)";
+        statusText.style.color = "#f48771";
+    } else {
+        // 计算下一张技能进度
+        // playerRoundCount 是当前回合数
+        // 偶数回合发技能。如果当前是奇数(1,3,5)，说明下回合发。如果当前是偶数(0,2,4)，说明刚发完或还没开始。
+        // 逻辑：当前回合数 % 2。
+        // 1 -> 充能中 (1/2)
+        // 2 -> 已获得 (0/2)
+        const progress = playerRoundCount % 2;
+        statusText.innerText = `技能充能中: ${progress}/2 回合`;
+        statusText.style.color = "#888";
+    }
 }
 
-const totalWeight = SKILLS.reduce((sum, skill) => sum + skill.weight, 0);
-let randomNum = Math.random() * totalWeight;
-let selectedSkill = null;
-for (const skill of SKILLS) {
-if (randomNum < skill.weight) {
-selectedSkill = skill;
-break;
-}
-randomNum -= skill.weight;
-}
-if (!selectedSkill) selectedSkill = SKILLS[0];
+function autoDrawSkill(targetArray, renderUI) {
+    if (!isGameActive) return;
+    if (targetArray.length >= 3) return;
 
-mySkills.push(selectedSkill);
-renderSkillCards();
-updateStatus();
+    const totalWeight = SKILLS.reduce((sum, skill) => sum + skill.weight, 0);
+    let randomNum = Math.random() * totalWeight;
+    let selectedSkill = null;
+    for (const skill of SKILLS) {
+        if (randomNum < skill.weight) { selectedSkill = skill; break; }
+        randomNum -= skill.weight;
+    }
+    if (!selectedSkill) selectedSkill = SKILLS[0];
 
-let logType = 'info';
-if (selectedSkill.weight === 1) logType = 'ssr'; // 金色传说
-else if (selectedSkill.weight <= 5) logType = 'error';
-else if (selectedSkill.weight <= 10) logType = 'warn';
-else logType = 'success';
-
-log(`自动抽取技能: ${selectedSkill.name}`, logType);
+    targetArray.push(selectedSkill);
+    if (renderUI) {
+        renderSkillCards();
+        log(`已安装扩展: ${selectedSkill.name}`, 'success');
+    }
 }
 
 function activateSkill(index) {
-if (!isGameActive || currentTurn !== myRole) {
-log("现在不是你的回合，无法激活技能", 'error');
-return;
-}
+    if (!isGameActive || currentTurn !== myRole) {
+        log("等待进程闲置 (非你的回合)", 'error');
+        return;
+    }
 
-const targetSkill = mySkills[index];
-if (!targetSkill) return;
+    const targetSkill = mySkills[index];
+    if (activeSkillMode && activeSkillMode.index === index) {
+        activeSkillMode = null;
+        boardEl.className = '';
+        renderSkillCards();
+        return;
+    }
 
-if (activeSkillMode && activeSkillMode.index === index) {
-activeSkillMode = null;
-boardEl.className = '';
-log("技能已取消", 'info');
-renderSkillCards();
-return;
-}
+    if (['force_win', 'shuffle', 'reset_hard'].includes(targetSkill.id)) {
+        if (confirm(`确定执行 [${targetSkill.name}] 吗？`)) {
+            activeSkillMode = { id: targetSkill.id, index: index };
+            executeInstantSkill(targetSkill);
+        }
+        return;
+    }
 
-// --- 新增：必胜卡逻辑 ---
-if (targetSkill.id === 'force_win') {
-if (confirm("【SSR 警告】\n你抽到了 1% 概率的隐藏大招！\n确定要使用 [Git Push --force] 强行覆盖历史并直接获胜吗？")) {
-activeSkillMode = { id: targetSkill.id, index: index };
-executeForceWin();
-return;
-} else { return; }
-}
-// --- 结束 ---
+    activeSkillMode = { id: targetSkill.id, index: index };
+    boardEl.className = '';
 
-if (targetSkill.id === 'shuffle') {
-if (confirm("确定要使用 [Git Rebase] 打乱全盘吗？\n打乱后你依然可以进行一次落子。")) {
-activeSkillMode = { id: targetSkill.id, index: index };
-executeShuffle();
-return;
-} else { return; }
-}
+    if (targetSkill.id === 'double') {
+        log("模式切换: Async Await (连下两子)", 'warn');
+        doubleMoveCount = 2;
+        showSkillEffect("ASYNC AWAIT", "SELECT 2 TARGETS");
+    } else if (targetSkill.id === 'destroy') {
+        log("模式切换: Git Revert (点击移除棋子)", 'warn');
+        boardEl.classList.add('destroy-mode');
+        showSkillEffect("GIT REVERT", "SELECT TARGET TO REMOVE");
+    } else if (targetSkill.id === 'random') {
+        log("模式切换: Code Injection (点击棋盘注入)", 'warn');
+        boardEl.classList.add('random-mode');
+        showSkillEffect("CODE INJECTION", "CLICK BOARD TO EXECUTE");
+    }
 
-if (targetSkill.id === 'reset_hard') {
-if (confirm("确定要使用 [Git Reset --hard] 清空对方所有手牌吗？\n注意：这将消耗你的回合。")) {
-activeSkillMode = { id: targetSkill.id, index: index };
-executeResetHard();
-return;
-} else { return; }
-}
-
-activeSkillMode = { id: targetSkill.id, index: index };
-boardEl.className = '';
-
-if (targetSkill.id === 'double') {
-log("技能激活: 下一步将连续落两子", 'warn');
-doubleMoveCount = 2;
-} else if (targetSkill.id === 'destroy') {
-log("技能激活: 请点击对方棋子进行移除", 'warn');
-boardEl.classList.add('destroy-mode');
-} else if (targetSkill.id === 'random') {
-log("技能激活: 点击棋盘任意位置触发随机生成", 'warn');
-boardEl.classList.add('random-mode');
-}
-
-renderSkillCards();
+    renderSkillCards();
 }
 
 function consumeSkill() {
-if (activeSkillMode !== null) {
-mySkills.splice(activeSkillMode.index, 1);
-activeSkillMode = null;
-boardEl.className = '';
-renderSkillCards();
-}
-}
-
-// --- 技能执行 ---
-
-// --- 新增：必胜执行 ---
-function executeForceWin() {
-consumeSkill();
-log("正在执行强制推送...", 'ssr');
-
-if (conn && conn.open) {
-conn.send({ type: 'force_win', winner: myRole });
+    if (activeSkillMode !== null) {
+        mySkills.splice(activeSkillMode.index, 1);
+        activeSkillMode = null;
+        boardEl.className = '';
+        renderSkillCards();
+    }
 }
 
-log("已执行 [Git Push --force]，代码库已强制同步！", 'ssr');
-endGame(myRole);
-}
-// --- 结束 ---
+function executeInstantSkill(skill) {
+    showSkillEffect(skill.name.toUpperCase(), "EXECUTING...");
 
-function executeShuffle() {
-let pieces = [];
-boardState.forEach(p => { if (p !== 0) pieces.push(p); });
+    if (skill.id === 'force_win') {
+        consumeSkill();
+        if (gameMode === 'pvp' && conn) conn.send({ type: 'force_win', winner: myRole, skillName: skill.name });
+        endGame(myRole);
+    }
+    else if (skill.id === 'shuffle') {
+        let pieces = [];
+        boardState.forEach(p => { if (p !== 0) pieces.push(p); });
+        if (pieces.length === 0) { activeSkillMode = null; return; }
 
-if (pieces.length === 0) {
-log("棋盘为空，无法打乱", 'error');
-activeSkillMode = null;
-return;
-}
+        let indices = Array.from({length: BOARD_SIZE * BOARD_SIZE}, (_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        boardState.fill(0);
+        pieces.forEach((p, i) => { boardState[indices[i]] = p; });
+        refreshBoardUI();
+        consumeSkill();
 
-let indices = Array.from({length: BOARD_SIZE * BOARD_SIZE}, (_, i) => i);
-for (let i = indices.length - 1; i > 0; i--) {
-const j = Math.floor(Math.random() * (i + 1));
-[indices[i], indices[j]] = [indices[j], indices[i]];
-}
+        // --- 修改点：使用后立即结束回合 ---
+        const nextTurnPlayer = (myRole === 1 ? 2 : 1); // 计算对方角色
 
-boardState.fill(0);
-pieces.forEach((p, i) => { boardState[indices[i]] = p; });
-
-refreshBoardUI();
-consumeSkill();
-
-if (conn && conn.open) {
-conn.send({ type: 'shuffle_board', newState: boardState, nextTurn: myRole });
-}
-
-log("已执行 [Git Rebase]，棋盘已重排！请继续落子。", 'success');
-checkFullBoardWin();
-}
-
-function executeResetHard() {
-consumeSkill();
-log("正在执行强制回退...", 'info');
-const nextTurnPlayer = (myRole === 1 ? 2 : 1);
-if (conn && conn.open) {
-conn.send({ type: 'reset_hard_request', nextTurn: nextTurnPlayer });
-}
-handleTurnChange(nextTurnPlayer);
-log("已使用 [Git Reset --hard] 清空了对方的手牌！回合结束。", 'success');
+        if (gameMode === 'pvp' && conn) {
+            // 告诉对方，下个回合是对方 (nextTurn: nextTurnPlayer)
+            conn.send({ type: 'shuffle_board', newState: boardState, nextTurn: nextTurnPlayer, skillName: skill.name });
+        }
+        
+        checkFullBoardWin();
+        // 本地立即切换回合
+        handleTurnChange(nextTurnPlayer);
+        // --------------------------------
+    }
+    else if (skill.id === 'reset_hard') {
+        consumeSkill();
+        const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+        if (gameMode === 'pvp' && conn) conn.send({ type: 'reset_hard_request', nextTurn: nextTurnPlayer, skillName: skill.name });
+        else if (gameMode === 'pve') {
+            aiSkills = [];
+            log("AI 手牌已清空", 'success');
+        }
+        handleTurnChange(nextTurnPlayer);
+    }
 }
 
 function refreshBoardUI() {
-const cells = boardEl.children;
-for (let i = 0; i < cells.length; i++) {
-const cell = cells[i];
-cell.innerHTML = '';
-const val = boardState[i];
-if (val !== 0) {
-const piece = document.createElement('div');
-piece.className = `piece ${val === 1 ? 'black' : 'white'}`;
-cell.appendChild(piece);
-}
-}
+    const cells = boardEl.children;
+    for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        cell.innerHTML = '';
+        const val = boardState[i];
+        if (val !== 0) {
+            const piece = document.createElement('div');
+            piece.className = `piece ${val === 1 ? 'black' : 'white'}`;
+            cell.appendChild(piece);
+        }
+    }
 }
 
-// --- 点击处理 ---
 function handleCellClick(index) {
-if (!isGameActive) return;
-if (currentTurn !== myRole) {
-log("还没轮到你！", 'error');
-return;
-}
+    if (!isGameActive) return;
+    if (currentTurn !== myRole) {
+        if (gameMode === 'pve' && currentTurn === 2) return;
+        if (gameMode === 'pvp') return;
+    }
 
-if (activeSkillMode && activeSkillMode.id === 'destroy') {
-handleDestroyClick(index);
-return;
-}
+    if (activeSkillMode && activeSkillMode.id === 'destroy') {
+        handleDestroyClick(index);
+        return;
+    }
+    if (activeSkillMode && activeSkillMode.id === 'random') {
+        handleRandomSpawn();
+        return;
+    }
 
-if (activeSkillMode && activeSkillMode.id === 'random') {
-handleRandomSpawn();
-return;
-}
+    if (boardState[index] !== 0) return;
 
-if (boardState[index] !== 0) return;
+    applyMoveLocal(index, myRole);
 
-applyMoveLocal(index, myRole);
+    let nextTurnPlayer = (myRole === 1 ? 2 : 1);
 
-let nextTurnPlayer = (myRole === 1 ? 2 : 1);
+    if (activeSkillMode && activeSkillMode.id === 'double') {
+        doubleMoveCount--;
+        if (doubleMoveCount > 0) {
+            nextTurnPlayer = myRole;
+            log("Async Await: 等待第二次提交", 'success');
+        } else {
+            consumeSkill();
+            if (gameMode === 'pvp' && conn) conn.send({ type: 'chat', msg: "Double Move Completed" });
+        }
+    }
 
-if (activeSkillMode && activeSkillMode.id === 'double') {
-doubleMoveCount--;
-if (doubleMoveCount > 0) {
-nextTurnPlayer = myRole;
-log("连击生效！请再落一子", 'success');
-} else {
-consumeSkill();
-if (conn) conn.send({ type: 'chat', msg: "对方使用了 [Double Await] 连下两子!" });
-}
-}
+    if (gameMode === 'pvp' && conn && conn.open) {
+        conn.send({ type: 'move', index: index, player: myRole, nextTurn: nextTurnPlayer });
+    }
 
-if (conn && conn.open) {
-conn.send({ type: 'move', index: index, player: myRole, nextTurn: nextTurnPlayer });
-}
-
-handleTurnChange(nextTurnPlayer);
-
-if (checkWin(index, myRole)) {
-endGame(myRole);
-}
+    if (checkWin(index, myRole)) {
+        endGame(myRole);
+    } else {
+        handleTurnChange(nextTurnPlayer);
+    }
 }
 
 function handleDestroyClick(index) {
-const targetOwner = boardState[index];
-const opponent = (myRole === 1 ? 2 : 1);
+    const targetOwner = boardState[index];
+    const opponent = (myRole === 1 ? 2 : 1);
 
-if (targetOwner !== opponent) {
-log("只能移除对方的棋子！", 'error');
-return;
-}
-removePieceLocal(index);
-consumeSkill();
-const nextTurnPlayer = myRole;
-if (conn && conn.open) {
-conn.send({ type: 'remove', index: index, nextTurn: nextTurnPlayer });
-}
-handleTurnChange(nextTurnPlayer);
-activeSkillMode = null;
-boardEl.className = '';
-renderSkillCards();
-log("已移除对方棋子，请继续落子！", 'success');
+    if (targetOwner !== opponent) {
+        log("Permission Denied: 只能 Revert 对方的代码", 'error');
+        return;
+    }
+    removePieceLocal(index);
+    consumeSkill();
+    const nextTurnPlayer = myRole;
+
+    if (gameMode === 'pvp' && conn) {
+        conn.send({ type: 'remove', index: index, nextTurn: nextTurnPlayer, skillName: "GIT REVERT" });
+    }
+
+    handleTurnChange(nextTurnPlayer);
+    activeSkillMode = null;
+    boardEl.className = '';
+    renderSkillCards();
 }
 
 function handleRandomSpawn() {
-const emptyIndices = [];
-for(let i=0; i<boardState.length; i++) {
-if(boardState[i] === 0) emptyIndices.push(i);
-}
+    const emptyIndices = getEmptyIndices();
+    if (emptyIndices.length < 4) {
+        log("内存溢出: 空间不足", 'error');
+        return;
+    }
 
-if (emptyIndices.length < 4) {
-log("棋盘空间不足，无法生成！", 'error');
-return;
-}
+    const targets = [];
+    for(let i=0; i<4; i++) {
+        const randIndex = Math.floor(Math.random() * emptyIndices.length);
+        targets.push(emptyIndices[randIndex]);
+        emptyIndices.splice(randIndex, 1);
+    }
 
-const targets = [];
-for(let i=0; i<4; i++) {
-const randIndex = Math.floor(Math.random() * emptyIndices.length);
-targets.push(emptyIndices[randIndex]);
-emptyIndices.splice(randIndex, 1);
-}
+    targets.forEach(idx => applyMoveLocal(idx, myRole));
+    consumeSkill();
 
-targets.forEach(idx => applyMoveLocal(idx, myRole));
-consumeSkill();
+    const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+    if (gameMode === 'pvp' && conn) {
+        conn.send({ type: 'multi_move', indices: targets, player: myRole, nextTurn: nextTurnPlayer, skillName: "CODE INJECTION" });
+    }
 
-const nextTurnPlayer = (myRole === 1 ? 2 : 1);
-if (conn && conn.open) {
-conn.send({ type: 'multi_move', indices: targets, player: myRole, nextTurn: nextTurnPlayer });
-}
+    let won = false;
+    for (let t of targets) { if (checkWin(t, myRole)) { won = true; break; } }
 
-handleTurnChange(nextTurnPlayer);
-log(`随机生成了 4 个棋子`, 'success');
-
-if (checkWin(targets[0], myRole) || checkWin(targets[1], myRole)) {
-endGame(myRole);
-}
+    if (won) endGame(myRole);
+    else handleTurnChange(nextTurnPlayer);
 }
 
 function applyMoveLocal(index, player) {
-boardState[index] = player;
-const cell = boardEl.children[index];
-const piece = document.createElement('div');
-piece.className = `piece ${player === 1 ? 'black' : 'white'} last`;
-cell.appendChild(piece);
+    boardState[index] = player;
+    const cell = boardEl.children[index];
+    const piece = document.createElement('div');
+    piece.className = `piece ${player === 1 ? 'black' : 'white'} last`;
+    cell.appendChild(piece);
 
-const prevLast = document.querySelectorAll('.piece.last');
-prevLast.forEach(p => { if(p !== piece) p.classList.remove('last'); });
+    const prevLast = document.querySelectorAll('.piece.last');
+    prevLast.forEach(p => { if(p !== piece) p.classList.remove('last'); });
 }
 
 function removePieceLocal(index) {
-boardState[index] = 0;
-const cell = boardEl.children[index];
-cell.innerHTML = '';
-cell.classList.remove('p1', 'p2');
+    boardState[index] = 0;
+    const cell = boardEl.children[index];
+    cell.innerHTML = '';
 }
 
+// --- 状态更新 (核心修改：显示黑白回合) ---
 function updateStatus() {
-const statusEl = document.getElementById('turn-status');
-if (!isGameActive) {
-statusEl.innerText = "游戏结束";
-return;
-}
-const isMyTurn = currentTurn === myRole;
-const turnName = currentTurn === 1 ? "黑方" : "白方";
-statusEl.innerText = `${turnName}回合 ${isMyTurn ? '(你的回合)' : '(等待对方)'}`;
-statusEl.style.color = isMyTurn ? '#4ec9b0' : '#cccccc';
-renderSkillCards();
+    const statusEl = document.getElementById('turn-status');
+    const turnIndicatorEl = document.getElementById('turn-indicator');
+    
+    if (!isGameActive) {
+        statusEl.innerText = "Game Over";
+        turnIndicatorEl.innerText = "🏁 Finished";
+        return;
+    }
+
+    // 更新黑白棋指示器
+    if (currentTurn === 1) {
+        turnIndicatorEl.innerText = "⚫ Current: Black";
+        turnIndicatorEl.style.color = "#ccc"; // 黑棋时用灰色
+    } else {
+        turnIndicatorEl.innerText = "⚪ Current: White";
+        turnIndicatorEl.style.color = "#fff"; // 白棋时用亮白
+    }
+
+    const isMyTurn = currentTurn === myRole;
+    let turnText = "";
+    if (gameMode === 'pve') {
+        if (currentTurn === 1) turnText = "等待输入 (Player)";
+        else turnText = "正在计算 (AI)...";
+    } else {
+        turnText = isMyTurn ? "等待输入 (You)" : "等待对方...";
+    }
+    statusEl.innerText = turnText;
+    statusEl.style.color = isMyTurn ? '#fff' : '#888';
+    
+    renderSkillCards();
 }
 
 function checkWin(index, player) {
-const x = index % BOARD_SIZE;
-const y = Math.floor(index / BOARD_SIZE);
-const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    const x = index % BOARD_SIZE;
+    const y = Math.floor(index / BOARD_SIZE);
+    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
-for (let [dx, dy] of directions) {
-let count = 1;
-for (let i = 1; i < 5; i++) {
-const nx = x + dx * i;
-const ny = y + dy * i;
-if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
-if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
-}
-for (let i = 1; i < 5; i++) {
-const nx = x - dx * i;
-const ny = y - dy * i;
-if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
-if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
-}
-if (count >= 5) return true;
-}
-return false;
+    for (let [dx, dy] of directions) {
+        let count = 1;
+        for (let i = 1; i < 5; i++) {
+            const nx = x + dx * i, ny = y + dy * i;
+            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
+            if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
+        }
+        for (let i = 1; i < 5; i++) {
+            const nx = x - dx * i, ny = y - dy * i;
+            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
+            if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
+        }
+        if (count >= 5) return true;
+    }
+    return false;
 }
 
 function checkFullBoardWin() {
-for (let i = 0; i < boardState.length; i++) {
-const player = boardState[i];
-if (player !== 0) {
-if (checkWin(i, player)) {
-endGame(player);
-return;
-}
-}
-}
+    for (let i = 0; i < boardState.length; i++) {
+        const player = boardState[i];
+        if (player !== 0) {
+            if (checkWin(i, player)) {
+                endGame(player);
+                return;
+            }
+        }
+    }
 }
 
 function endGame(winner) {
-isGameActive = false;
-const winnerName = winner === 1 ? "黑方" : "白方";
-const modal = document.getElementById('game-over-modal');
-const text = document.getElementById('winner-text');
-text.innerText = `${winnerName} 获胜!`;
-text.style.color = (winner === myRole) ? '#4ec9b0' : '#f48771';
-modal.style.display = 'flex';
-updateStatus();
+    isGameActive = false;
+    let winnerName = "";
+    if (gameMode === 'pve') {
+        winnerName = winner === 1 ? "玩家 (Player)" : "电脑 (AI)";
+    } else {
+        winnerName = winner === 1 ? "黑方 (Black)" : "白方 (White)";
+    }
+
+    const modal = document.getElementById('game-over-modal');
+    const text = document.getElementById('winner-text');
+    text.innerText = `${winnerName} Wins!`;
+    text.style.color = (winner === myRole) ? '#4ec9b0' : '#f48771';
+    modal.style.display = 'flex';
+    updateStatus();
 }
 
 function requestRestart() {
-resetGame();
-if (conn && conn.open) conn.send({ type: 'restart' });
+    resetGame();
+    if (gameMode === 'pvp' && conn && conn.open) conn.send({ type: 'restart' });
+    if (gameMode === 'pve') startGame(1);
 }
 
 function resetGame(sendLog = true) {
-initBoard();
-isGameActive = true;
-currentTurn = 1;
-updateStatus();
-if(sendLog) log("游戏已重置", 'info');
+    initBoard();
+    isGameActive = true;
+    currentTurn = 1;
+    updateStatus();
+    if(sendLog) log("工作区已重置", 'info');
 }
 </script>
 </body>
