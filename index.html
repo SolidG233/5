@@ -430,31 +430,26 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
                 <h2>🎮 游戏规则</h2>
                 <ul>
                     <li><span class="key-tag">目标</span> 率先连成5子获胜。</li>
-                    <li><span class="key-tag">机制</span> 每位玩家每 <strong>2回合</strong> 自动获得一个随机技能（扩展包）。</li>
+                    <li><span class="key-tag">机制</span> 每位玩家每 <strong>2回合</strong> 自动获得一个随机技能。</li>
                     <li><span class="key-tag">限制</span> 手牌上限为 3 张。</li>
                 </ul>
 
-                <h2>🛠️ 扩展包 (Skills)</h2>
+                <h2>🛠️ 技能 (Skills)</h2>
                 
                 <p><strong>1. 飞沙走石 (Git Revert)</strong></p>
-                <div class="code-block">git revert &lt;commit_id&gt;</div>
-                <p>移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁 3 回合无法落子。</p>
-
+                <div class="code-block">移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁 3 回合无法落子。</div>
+                
                 <p><strong>2. 再来一次 (Double Commit)</strong></p>
-                <div class="code-block">git commit --amend</div>
-                <p>本回合可以连续落下两颗棋子。</p>
+                <div class="code-block">本回合可以连续落下两颗棋子。</div>
 
                 <p><strong>3. 两极反转 (Git Rebase)</strong></p>
-                <div class="code-block">git rebase --interactive</div>
-                <p>打乱棋盘上所有棋子的位置（保留数量），但会跳过你的本回合。</p>
+                <div class="code-block">打乱棋盘上所有棋子的位置（保留数量），但会跳过你的本回合。</div>
 
                 <p><strong>4. 一忘皆空 (Git Reset --hard)</strong></p>
-                <div class="code-block">git reset --hard HEAD~1</div>
-                <p>清空对方所有手牌。作为补偿，系统会为对方随机落下等量的棋子。</p>
+                <div class="code-block">清空对方所有手牌。但会为对方随机落下等量的棋子。</div>
 
                 <p><strong>5. 擒拿擒拿 (Code Injection)</strong></p>
-                <p>随机在棋盘空位生成 4 颗己方棋子。</p>
-
+                <div class="code-block">随机在棋盘空位生成 4 颗己方棋子，但会跳过你的本回合。</div>
             </div>
         </div>
     </div>
