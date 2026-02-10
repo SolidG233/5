@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>main.js - Visual Studio Code (Gomoku Modified)</title>
+<title>main.js - Visual Studio Code (Gomoku PvP Modified)</title>
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <style>
 /* --- VS Code 风格重置 & 高级 UI --- */
 :root {
-    --bg-dark: #1e1e1e;
-    --bg-sidebar: #252526;
-    --bg-activity: #333333;
-    --bg-title: #3c3c3c;
-    --border-color: #454545;
-    --accent-blue: #007fd4;
-    --text-primary: #cccccc;
-    --text-highlight: #ffffff;
-    --grid-line: #2a2a2a;
-    --panel-width: 300px; /* 右侧面板宽度 */
+--bg-dark: #1e1e1e;
+--bg-sidebar: #252526;
+--bg-activity: #333333;
+--bg-title: #3c3c3c;
+--border-color: #454545;
+--accent-blue: #007fd4;
+--text-primary: #cccccc;
+--text-highlight: #ffffff;
+--grid-line: #2a2a2a;
+--panel-width: 300px; /* 右侧面板宽度 */
 }
 
 body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace; background: var(--bg-dark); color: var(--text-primary); user-select: none; }
@@ -72,18 +72,18 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 #skills-container { flex: 1; overflow-y: auto; padding: 5px; }
 
 .skill-card {
-    background: #2d2d2d; border-left: 3px solid #c586c0; padding: 8px; margin-bottom: 6px;
-    cursor: pointer; transition: all 0.2s; position: relative;
-    animation: slideIn 0.3s ease-out;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+background: #2d2d2d; border-left: 3px solid #c586c0; padding: 8px; margin-bottom: 6px;
+cursor: pointer; transition: all 0.2s; position: relative;
+animation: slideIn 0.3s ease-out;
+box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 /* 新增：卡片获得时的高亮动画 */
 .skill-card.just-added {
-    animation: cardFlash 1s ease-out;
+animation: cardFlash 1s ease-out;
 }
 @keyframes cardFlash {
-    0% { background-color: #4ec9b0; transform: scale(1.05); }
-    100% { background-color: #2d2d2d; transform: scale(1); }
+0% { background-color: #4ec9b0; transform: scale(1.05); }
+100% { background-color: #2d2d2d; transform: scale(1); }
 }
 
 @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -112,31 +112,31 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 
 /* === 右侧说明面板 (新) === */
 .info-panel {
-    width: var(--panel-width);
-    background: var(--bg-sidebar);
-    border-left: 1px solid #000;
-    display: flex;
-    flex-direction: column;
-    color: #cccccc;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+width: var(--panel-width);
+background: var(--bg-sidebar);
+border-left: 1px solid #000;
+display: flex;
+flex-direction: column;
+color: #cccccc;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .info-header {
-    height: 35px;
-    padding: 0 15px;
-    display: flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: bold;
-    color: #bbb;
-    background: #252526;
-    border-bottom: 1px solid #333;
+height: 35px;
+padding: 0 15px;
+display: flex;
+align-items: center;
+font-size: 11px;
+font-weight: bold;
+color: #bbb;
+background: #252526;
+border-bottom: 1px solid #333;
 }
 .info-body {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    font-size: 13px;
-    line-height: 1.6;
+flex: 1;
+padding: 20px;
+overflow-y: auto;
+font-size: 13px;
+line-height: 1.6;
 }
 .info-body h1 { font-size: 20px; margin-bottom: 10px; color: #4ec9b0; border-bottom: 1px solid #3c3c3c; padding-bottom: 5px; }
 .info-body h2 { font-size: 16px; margin-top: 20px; margin-bottom: 10px; color: #569cd6; }
@@ -148,32 +148,32 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 
 /* === 获得卡片 Toast 通知 (新) === */
 .toast-container {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 100;
-    pointer-events: none;
+position: absolute;
+bottom: 20px;
+right: 20px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+z-index: 100;
+pointer-events: none;
 }
 .toast {
-    background: #252526;
-    border: 1px solid #454545;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    width: 300px;
-    padding: 12px;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: auto;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+background: #252526;
+border: 1px solid #454545;
+box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+width: 300px;
+padding: 12px;
+display: flex;
+gap: 12px;
+align-items: flex-start;
+animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+pointer-events: auto;
+cursor: pointer;
+position: relative;
+overflow: hidden;
 }
 .toast::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #007fd4;
+content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #007fd4;
 }
 .toast-icon { font-size: 24px; }
 .toast-content { flex: 1; }
@@ -183,72 +183,72 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .toast-btn { background: #007fd4; color: white; border: none; padding: 4px 8px; font-size: 11px; cursor: pointer; border-radius: 2px; }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+from { transform: translateY(20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
 }
 @keyframes fadeOut {
-    to { opacity: 0; transform: translateX(20px); }
+to { opacity: 0; transform: translateX(20px); }
 }
 
 
 /* 简约棋盘网格 */
 #board {
-    display: grid;
-    grid-template-columns: repeat(15, 30px);
-    grid-template-rows: repeat(15, 30px);
-    background: #1e1e1e;
-    position: relative;
-    padding: 10px;
+display: grid;
+grid-template-columns: repeat(15, 30px);
+grid-template-rows: repeat(15, 30px);
+background: #1e1e1e;
+position: relative;
+padding: 10px;
 }
 
 .cell {
-    width: 30px; height: 30px;
-    position: relative; cursor: pointer;
+width: 30px; height: 30px;
+position: relative; cursor: pointer;
 }
 
 /* 简约网格线：十字交叉风格 */
 .cell::before {
-    content: ''; position: absolute;
-    top: 50%; left: 0; right: 0;
-    height: 1px; background: var(--grid-line);
-    pointer-events: none;
-    z-index: 0;
+content: ''; position: absolute;
+top: 50%; left: 0; right: 0;
+height: 1px; background: var(--grid-line);
+pointer-events: none;
+z-index: 0;
 }
 .cell::after {
-    content: ''; position: absolute;
-    left: 50%; top: 0; bottom: 0;
-    width: 1px; background: var(--grid-line);
-    pointer-events: none;
-    z-index: 0;
+content: ''; position: absolute;
+left: 50%; top: 0; bottom: 0;
+width: 1px; background: var(--grid-line);
+pointer-events: none;
+z-index: 0;
 }
 
 .cell:hover::before, .cell:hover::after { background: #444; }
 
 /* --- Git Revert 后的虚空状态 --- */
 .cell.void {
-    background: repeating-linear-gradient(
-        45deg,
-        #252526,
-        #252526 5px,
-        #2d2020 5px,
-        #2d2020 10px
-    );
-    cursor: not-allowed;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+background: repeating-linear-gradient(
+45deg,
+#252526,
+#252526 5px,
+#2d2020 5px,
+#2d2020 10px
+);
+cursor: not-allowed;
+box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
 }
 .cell.void::before, .cell.void::after {
-    background: transparent; /* 移除网格线 */
+background: transparent; /* 移除网格线 */
 }
 /* 虚空上的红叉 */
 .cell.void::before {
-    content: '×';
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    color: #5a2d2d;
-    font-size: 20px;
-    font-weight: bold;
-    height: auto; width: auto; background: transparent;
-    z-index: 1;
+content: '×';
+position: absolute; top: 50%; left: 50%;
+transform: translate(-50%, -50%);
+color: #5a2d2d;
+font-size: 20px;
+font-weight: bold;
+height: auto; width: auto; background: transparent;
+z-index: 1;
 }
 
 /* 技能模式下的光标 */
@@ -259,27 +259,27 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 
 /* 棋子样式升级 */
 .piece {
-    width: 20px; height: 20px; border-radius: 50%; position: absolute;
-    top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-    z-index: 2;
-    box-shadow: 1px 2px 4px rgba(0,0,0,0.6);
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: popIn 0.2s forwards;
+width: 20px; height: 20px; border-radius: 50%; position: absolute;
+top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+z-index: 2;
+box-shadow: 1px 2px 4px rgba(0,0,0,0.6);
+transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+animation: popIn 0.2s forwards;
 }
 @keyframes popIn { to { transform: translate(-50%, -50%) scale(1); } }
 
 .piece.black {
-    background: radial-gradient(circle at 35% 35%, #666, #111);
-    border: 1px solid #000;
+background: radial-gradient(circle at 35% 35%, #666, #111);
+border: 1px solid #000;
 }
 .piece.white {
-    background: radial-gradient(circle at 35% 35%, #fff, #ddd);
-    border: 1px solid #999;
+background: radial-gradient(circle at 35% 35%, #fff, #ddd);
+border: 1px solid #999;
 }
 .piece.last::after {
-    content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 6px; height: 6px; background: #ff0044; border-radius: 50%;
-    box-shadow: 0 0 6px #ff0044;
+content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+width: 6px; height: 6px; background: #ff0044; border-radius: 50%;
+box-shadow: 0 0 6px #ff0044;
 }
 
 /* 底部状态栏 */
@@ -289,45 +289,45 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 
 /* 游戏结束遮罩 */
 #game-over-modal {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
-    z-index: 20;
-    display: none; justify-content: center; align-items: center; flex-direction: column;
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0, 0, 0, 0.6);
+backdrop-filter: blur(5px);
+z-index: 20;
+display: none; justify-content: center; align-items: center; flex-direction: column;
 }
 .modal-box {
-    background: #252526; border: 1px solid #454545; padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
-    border-radius: 4px; min-width: 300px;
+background: #252526; border: 1px solid #454545; padding: 30px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
+border-radius: 4px; min-width: 300px;
 }
 .modal-title { font-size: 24px; margin-bottom: 20px; color: #fff; font-weight: 300; }
 
 /* --- 技能释放特效 --- */
 #skill-effect-overlay {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; display: flex; justify-content: center; align-items: center;
-    z-index: 15; overflow: hidden;
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+pointer-events: none; display: flex; justify-content: center; align-items: center;
+z-index: 15; overflow: hidden;
 }
 .skill-flash-text {
-    font-size: 40px; font-weight: 900; color: #fff;
-    text-transform: uppercase; letter-spacing: 5px;
-    text-shadow: 0 0 10px rgba(0, 127, 212, 0.8), 0 0 20px rgba(0, 127, 212, 0.5);
-    opacity: 0; transform: scale(0.5);
-    font-family: 'Arial Black', sans-serif;
-    text-align: center;
+font-size: 40px; font-weight: 900; color: #fff;
+text-transform: uppercase; letter-spacing: 5px;
+text-shadow: 0 0 10px rgba(0, 127, 212, 0.8), 0 0 20px rgba(0, 127, 212, 0.5);
+opacity: 0; transform: scale(0.5);
+font-family: 'Arial Black', sans-serif;
+text-align: center;
 }
 .skill-flash-text.animate {
-    animation: skillFlash 1.5s ease-out forwards;
+animation: skillFlash 1.5s ease-out forwards;
 }
 @keyframes skillFlash {
-    0% { opacity: 0; transform: scale(0.5) translateY(20px); filter: blur(10px); }
-    10% { opacity: 1; transform: scale(1.1) translateY(0); filter: blur(0); }
-    20% { transform: scale(1); }
-    80% { opacity: 1; transform: scale(1); filter: blur(0); }
-    100% { opacity: 0; transform: scale(1.2); filter: blur(20px); }
+0% { opacity: 0; transform: scale(0.5) translateY(20px); filter: blur(10px); }
+10% { opacity: 1; transform: scale(1.1) translateY(0); filter: blur(0); }
+20% { transform: scale(1); }
+80% { opacity: 1; transform: scale(1); filter: blur(0); }
+100% { opacity: 0; transform: scale(1.2); filter: blur(20px); }
 }
 .skill-subtext {
-    font-size: 14px; font-weight: normal; color: #4ec9b0; margin-top: 10px; letter-spacing: 2px;
+font-size: 14px; font-weight: normal; color: #4ec9b0; margin-top: 10px; letter-spacing: 2px;
 }
 
 </style>
@@ -335,141 +335,141 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 <body>
 
 <div class="vscode-container">
-    <div class="title-bar">
-        <div class="traffic-lights"><div class="traffic-light close"></div><div class="traffic-light minimize"></div><div class="traffic-light maximize"></div></div>
-        <span>main.js - Visual Studio Code (AI Powered)</span>
-    </div>
+<div class="title-bar">
+<div class="traffic-lights"><div class="traffic-light close"></div><div class="traffic-light minimize"></div><div class="traffic-light maximize"></div></div>
+<span>main.js - Visual Studio Code (AI Powered)</span>
+</div>
 
-    <div class="workspace">
-        <div class="activity-bar">
-            <div class="activity-icon active" title="资源管理器">📄</div>
-            <div class="activity-icon" title="搜索">🔍</div>
-            <div class="activity-icon" title="源代码管理">🌱</div>
-            <div class="activity-icon" title="调试">🐞</div>
-            <div class="activity-icon" title="扩展">🧩</div>
-        </div>
+<div class="workspace">
+<div class="activity-bar">
+<div class="activity-icon active" title="资源管理器">📄</div>
+<div class="activity-icon" title="搜索">🔍</div>
+<div class="activity-icon" title="源代码管理">🌱</div>
+<div class="activity-icon" title="调试">🐞</div>
+<div class="activity-icon" title="扩展">🧩</div>
+</div>
 
-        <div class="sidebar">
-            <div class="sidebar-header">EXPLORER: GOMOKU PROJECT</div>
-            <div class="sidebar-content">
-                
-                <div style="margin-bottom: 10px;">
-                    <div style="font-size:11px; font-weight:bold; color:#bbb; margin-bottom:5px;">GAME MODES</div>
-                    <button id="btn-pve" class="vscode-btn" onclick="startPvE()">
-                        <span>🤖 VS Code AI (单机)</span>
-                    </button>
-                </div>
+<div class="sidebar">
+<div class="sidebar-header">EXPLORER: GOMOKU PROJECT</div>
+<div class="sidebar-content">
 
-                <div class="separator"></div>
+<div style="margin-bottom: 10px;">
+<div style="font-size:11px; font-weight:bold; color:#bbb; margin-bottom:5px;">GAME MODES</div>
+<button id="btn-pve" class="vscode-btn" onclick="startPvE()">
+<span>🤖 VS Code AI (单机)</span>
+</button>
+</div>
 
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size:11px; font-weight:bold; color:#bbb; margin-bottom:5px;">MULTIPLAYER (P2P)</div>
-                    <input type="text" id="my-id-input" class="vscode-input" placeholder="输入房间号 (如: 101)">
-                    <button id="btn-host" class="vscode-btn btn-secondary" onclick="createGame()">创建主机 (执黑)</button>
-                    <button id="btn-join" class="vscode-btn btn-secondary" onclick="joinGame()">连接主机 (执白)</button>
-                </div>
+<div class="separator"></div>
 
-                <!-- 技能区域 -->
-                <div class="skill-section">
-                    <div class="skill-header">
-                        <span>INSTALLED EXTENSIONS</span>
-                        <span id="skill-count" style="font-weight:normal;">0/3</span>
-                    </div>
-                    <div id="skill-status-text" style="padding:5px 10px; font-size:11px; color:#888; border-bottom:1px solid #333;">
-                        每2回合自动获得技能
-                    </div>
-                    <!-- 技能卡片容器 -->
-                    <div id="skills-container"></div>
-                </div>
+<div style="margin-bottom: 15px;">
+<div style="font-size:11px; font-weight:bold; color:#bbb; margin-bottom:5px;">MULTIPLAYER (P2P)</div>
+<input type="text" id="my-id-input" class="vscode-input" placeholder="输入房间号 (如: 101)">
+<button id="btn-host" class="vscode-btn btn-secondary" onclick="createGame()">创建主机 (执黑)</button>
+<button id="btn-join" class="vscode-btn btn-secondary" onclick="joinGame()">连接主机 (执白)</button>
+</div>
 
-                <button id="btn-restart" class="vscode-btn" style="background:#8f0e0e; margin-top:10px; display:none;" onclick="requestRestart()">重新开始</button>
+<!-- 技能区域 -->
+<div class="skill-section">
+<div class="skill-header">
+<span>INSTALLED EXTENSIONS</span>
+<span id="skill-count" style="font-weight:normal;">0/3</span>
+</div>
+<div id="skill-status-text" style="padding:5px 10px; font-size:11px; color:#888; border-bottom:1px solid #333;">
+每2回合自动获得技能
+</div>
+<!-- 技能卡片容器 -->
+<div id="skills-container"></div>
+</div>
 
-                <div class="status-log" id="log-box">
-                    <div class="log-item log-info">VS Code Gomoku Engine Ready.</div>
-                    <div class="log-item log-info">Select a mode to start.</div>
-                </div>
-            </div>
-        </div>
+<button id="btn-restart" class="vscode-btn" style="background:#8f0e0e; margin-top:10px; display:none;" onclick="requestRestart()">重新开始</button>
 
-        <div class="editor-group">
-            <div class="tabs-header">
-                <div class="tab"><span class="tab-icon">JS</span>main.js<span class="unsaved-dot"></span><span style="margin-left: 10px; font-size: 14px; color:#999;">×</span></div>
-                <div class="tab inactive"><span class="tab-icon md">M↓</span>README.md</div>
-            </div>
-            <div class="editor-body">
-                <!-- 模拟行号 -->
-                <div class="gutter" id="gutter">
-                    <!-- JS 生成行号 -->
-                </div>
-                <div class="editor-content">
-                    <div id="board"><!-- Generated by JS --></div>
-                    
-                    <!-- 技能特效层 -->
-                    <div id="skill-effect-overlay"></div>
-                    
-                    <!-- 获得卡片 Toast 容器 -->
-                    <div id="toast-container" class="toast-container"></div>
+<div class="status-log" id="log-box">
+<div class="log-item log-info">VS Code Gomoku Engine Ready.</div>
+<div class="log-item log-info">Select a mode to start.</div>
+</div>
+</div>
+</div>
 
-                    <div id="game-over-modal">
-                        <div class="modal-box">
-                            <div class="modal-title" id="winner-text">游戏结束</div>
-                            <button class="vscode-btn" onclick="requestRestart()">再来一局</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="editor-group">
+<div class="tabs-header">
+<div class="tab"><span class="tab-icon">JS</span>main.js<span class="unsaved-dot"></span><span style="margin-left: 10px; font-size: 14px; color:#999;">×</span></div>
+<div class="tab inactive"><span class="tab-icon md">M↓</span>README.md</div>
+</div>
+<div class="editor-body">
+<!-- 模拟行号 -->
+<div class="gutter" id="gutter">
+<!-- JS 生成行号 -->
+</div>
+<div class="editor-content">
+<div id="board"><!-- Generated by JS --></div>
 
-        <!-- 新增：右侧说明面板 -->
-        <div class="info-panel">
-            <div class="info-header">MARKDOWN PREVIEW: README.md</div>
-            <div class="info-body">
-                <h1>Gomoku AI Extension</h1>
-                <p>欢迎使用 VS Code 五子棋插件。这是一个集成了 Git 版本控制概念的策略游戏。</p>
-                
-                <h2>🎮 游戏规则</h2>
-                <ul>
-                    <li><span class="key-tag">目标</span> 率先连成5子获胜。</li>
-                    <li><span class="key-tag">机制</span> 每位玩家每 <strong>2回合</strong> 自动获得一个随机技能。</li>
-                    <li><span class="key-tag">限制</span> 手牌上限为 3 张。</li>
-                </ul>
+<!-- 技能特效层 -->
+<div id="skill-effect-overlay"></div>
 
-                <h2>🛠️ 技能 (Skills)</h2>
-                
-                <p><strong>1. 飞沙走石 (Git Revert)</strong></p>
-                <div class="code-block">移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁无法落子。</div>
-                
-                <p><strong>2. 再来一次 (Double Commit)</strong></p>
-                <div class="code-block">本回合可以连续落下两颗棋子。</div>
+<!-- 获得卡片 Toast 容器 -->
+<div id="toast-container" class="toast-container"></div>
 
-                <p><strong>3. 两极反转 (Git Rebase)</strong></p>
-                <div class="code-block">打乱棋盘上所有棋子的位置（保留数量），跳过你的本回合。</div>
+<div id="game-over-modal">
+<div class="modal-box">
+<div class="modal-title" id="winner-text">游戏结束</div>
+<button class="vscode-btn" onclick="requestRestart()">再来一局</button>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-                <p><strong>4. 一忘皆空 (Git Reset --hard)</strong></p>
-                <div class="code-block">清空对方所有手牌，对方会随机落下等量的棋子，跳过你的本回合。</div>
+<!-- 新增：右侧说明面板 -->
+<div class="info-panel">
+<div class="info-header">MARKDOWN PREVIEW: README.md</div>
+<div class="info-body">
+<h1>Gomoku AI Extension</h1>
+<p>欢迎使用 VS Code 五子棋插件。这是一个集成了 Git 版本控制概念的策略游戏。</p>
 
-                <p><strong>5. 擒拿擒拿 (Code Injection)</strong></p>
-                <div class="code-block">随机在棋盘空位生成 4 颗己方棋子，跳过你的本回合。</div>
-            </div>
-        </div>
-    </div>
+<h2>🎮 游戏规则</h2>
+<ul>
+<li><span class="key-tag">目标</span> 率先连成5子获胜。</li>
+<li><span class="key-tag">机制</span> 每位玩家每 <strong>2回合</strong> 自动获得一个随机技能。</li>
+<li><span class="key-tag">限制</span> 手牌上限为 3 张。</li>
+</ul>
 
-    <div class="status-bar">
-        <div class="status-left">
-            <div class="status-item"><span style="font-size:14px;">⚡</span> master*</div>
-            <div class="status-item">0 errors, 0 warnings</div>
-        </div>
-        <div class="status-right">
-            <!-- 增加对手卡片显示 -->
-            <div class="status-item" id="对方技能数量" style="color: #f48771; font-weight:bold;">对方技能数量: 0</div>
-            <div class="status-item" id="turn-indicator" style="font-weight: bold; color: #fff;">⚫ Current: Black</div>
-            <div class="status-item" id="date-status">2026-02-09</div>
-            <div class="status-item" id="mode-status">Mode: Idle</div>
-            <div class="status-item" id="turn-status">Waiting</div>
-            <div class="status-item">JavaScript</div>
-            <div class="status-item">Markdown</div>
-        </div>
-    </div>
+<h2>🛠️ 技能 (Skills)</h2>
+
+<p><strong>1. 飞沙走石 (Git Revert)</strong></p>
+<div class="code-block">移除对方一颗棋子，并将该位置标记为<span style="color:#f48771">虚空 (Void)</span>，封锁无法落子。</div>
+
+<p><strong>2. 再来一次 (Double Commit)</strong></p>
+<div class="code-block">本回合可以连续落下两颗棋子。</div>
+
+<p><strong>3. 两极反转 (Git Rebase)</strong></p>
+<div class="code-block">打乱棋盘上所有棋子的位置（保留数量），但会跳过你的本回合。</div>
+
+<p><strong>4. 一忘皆空 (Git Reset --hard)</strong></p>
+<div class="code-block">清空对方所有手牌。但会为对方随机落下等量的棋子。<br><strong>注意：使用后会跳过你的本回合。</strong></div>
+
+<p><strong>5. 擒拿擒拿 (Code Injection)</strong></p>
+<div class="code-block">随机在棋盘空位生成 4 颗己方棋子，但会跳过你的本回合。</div>
+</div>
+</div>
+</div>
+
+<div class="status-bar">
+<div class="status-left">
+<div class="status-item"><span style="font-size:14px;">⚡</span> master*</div>
+<div class="status-item">0 errors, 0 warnings</div>
+</div>
+<div class="status-right">
+<!-- 增加对手卡片显示 -->
+<div class="status-item" id="opponent-cards" style="color: #f48771; font-weight:bold;">Opponent Cards: 0</div>
+<div class="status-item" id="turn-indicator" style="font-weight: bold; color: #fff;">⚫ Current: Black</div>
+<div class="status-item" id="date-status"></div>
+<div class="status-item" id="mode-status">Mode: Idle</div>
+<div class="status-item" id="turn-status">Waiting</div>
+<div class="status-item">JavaScript</div>
+<div class="status-item">Markdown</div>
+</div>
+</div>
 </div>
 
 <script>
@@ -488,13 +488,14 @@ let voidTracker = []; // 结构: [{ index: 123, duration: 2 }]
 // --- 技能配置 ---
 // 修改这里的 name 会直接影响特效文字
 const SKILLS = [
-    // 修改：将封锁时间改为3回合
-    { id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域', weight: 30, color: '#f48771', icon: '⚡' },
-    { id: 'double', name: '再来一次！', desc: '连续下两个棋子 ', weight: 10, color: '#569cd6', icon: '✨' },
-    { id: 'shuffle', name: '两极反转！', desc: '打乱棋盘重排 会跳过你的回合', weight: 15, color: '#c586c0', icon: '🌀' },
-    { id: 'reset_hard', name: '一忘皆空！', desc: '清空对方手牌，但对方随机落子补偿', weight: 20, color: '#dcdcaa', icon: '🔥' },
-    { id: 'random', name: '擒拿擒拿！', desc: '随机生成4颗己方棋子', weight: 10, color: '#4ec9b0', icon: '🎲' },
-    { id: 'force_win', name: '欧皇降临', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d', icon: '👑' }
+// 修改：将封锁时间改为3回合
+{ id: 'destroy', name: '飞沙走石！', desc: '移除对方棋子并封锁该区域', weight: 30, color: '#f48771', icon: '⚡' },
+{ id: 'double', name: '再来一次！', desc: '连续下两个棋子 ', weight: 10, color: '#569cd6', icon: '✨' },
+{ id: 'shuffle', name: '两极反转！', desc: '打乱棋盘重排 会跳过你的回合', weight: 15, color: '#c586c0', icon: '🌀' },
+// 修改：明确描述“跳过本回合”
+{ id: 'reset_hard', name: '一忘皆空！', desc: '清空对方手牌并随机补偿，跳过本回合', weight: 20, color: '#dcdcaa', icon: '🔥' },
+{ id: 'random', name: '擒拿擒拿！', desc: '随机生成4颗己方棋子', weight: 10, color: '#4ec9b0', icon: '🎲' },
+{ id: 'force_win', name: '欧皇降临', desc: '直接获胜 (SSR)', weight: 1, color: '#d7ba7d', icon: '👑' }
 ];
 
 let mySkills = [];
@@ -516,992 +517,1020 @@ const boardEl = document.getElementById('board');
 const gutterEl = document.getElementById('gutter');
 
 function initBoard() {
-    boardEl.innerHTML = '';
-    boardEl.className = '';
-    boardState.fill(0);
-    
-    // 重置虚空追踪
-    voidTracker = [];
+boardEl.innerHTML = '';
+boardEl.className = '';
+boardState.fill(0);
 
-    // 生成棋盘
-    for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.index = i;
-        cell.onclick = () => handleCellClick(i);
-        boardEl.appendChild(cell);
-    }
+// 重置虚空追踪
+voidTracker = [];
 
-    // 生成行号
-    gutterEl.innerHTML = '';
-    for(let i=1; i<=30; i++) {
-        const line = document.createElement('div');
-        line.innerText = i;
-        gutterEl.appendChild(line);
-    }
+// 生成棋盘
+for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+const cell = document.createElement('div');
+cell.className = 'cell';
+cell.dataset.index = i;
+cell.onclick = () => handleCellClick(i);
+boardEl.appendChild(cell);
+}
 
-    document.getElementById('game-over-modal').style.display = 'none';
-    mySkills = [];
-    aiSkills = [];
-    activeSkillMode = null;
-    playerRoundCount = 0; // 重置计数
-    aiRoundCount = 0;
-    renderSkillCards();
-    updateOpponentCardCount(0); // 重置对手卡片显示
+// 生成行号
+gutterEl.innerHTML = '';
+for(let i=1; i<=30; i++) {
+const line = document.createElement('div');
+line.innerText = i;
+gutterEl.appendChild(line);
+}
+
+document.getElementById('game-over-modal').style.display = 'none';
+mySkills = [];
+aiSkills = [];
+activeSkillMode = null;
+playerRoundCount = 0; // 重置计数
+aiRoundCount = 0;
+renderSkillCards();
+updateOpponentCardCount(0); // 重置对手卡片显示
 }
 initBoard();
 
 // 更新时间显示
 setInterval(() => {
-    const now = new Date();
-    // 保持日期为2026-02-09，只更新时间
-    document.getElementById('date-status').innerText = `2026-02-09 ${now.toLocaleTimeString()}`;
+const now = new Date();
+document.getElementById('date-status').innerText = ` ${now.toLocaleTimeString()}`;
 }, 1000);
 
 function log(msg, type = 'info') {
-    const box = document.getElementById('log-box');
-    const div = document.createElement('div');
-    div.className = `log-item log-${type}`;
-    div.innerText = `> ${msg}`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
+const box = document.getElementById('log-box');
+const div = document.createElement('div');
+div.className = `log-item log-${type}`;
+div.innerText = `> ${msg}`;
+box.appendChild(div);
+box.scrollTop = box.scrollHeight;
 }
 
 function showSkillEffect(skillName, subtext = "EXTENSION ACTIVATED") {
-    const overlay = document.getElementById('skill-effect-overlay');
-    overlay.innerHTML = '';
-    
-    const textDiv = document.createElement('div');
-    textDiv.className = 'skill-flash-text animate';
-    // skillName 会被 CSS 自动转换为大写
-    textDiv.innerHTML = `
-        <div>${skillName}</div>
-        <div class="skill-subtext">${subtext}</div>
-    `;
-    
-    overlay.appendChild(textDiv);
-    setTimeout(() => { textDiv.remove(); }, 1600);
+const overlay = document.getElementById('skill-effect-overlay');
+overlay.innerHTML = '';
+
+const textDiv = document.createElement('div');
+textDiv.className = 'skill-flash-text animate';
+// skillName 会被 CSS 自动转换为大写
+textDiv.innerHTML = `
+<div>${skillName}</div>
+<div class="skill-subtext">${subtext}</div>
+`;
+
+overlay.appendChild(textDiv);
+setTimeout(() => { textDiv.remove(); }, 1600);
 }
 
 // 新增：显示获得卡片的 Toast 通知
 function showExtensionInstalledToast(skill) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = `
-        <div class="toast-icon">${skill.icon || '📦'}</div>
-        <div class="toast-content">
-            <div class="toast-title">Extension Installed</div>
-            <div class="toast-desc">Extension '${skill.name}' is now active.</div>
-            <div class="toast-buttons">
-                <button class="toast-btn">Don't Show Again</button>
-                <button class="toast-btn" style="background:#3c3c3c;">Manage</button>
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(toast);
-    
-    // 5秒后自动消失
-    setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.5s forwards';
-        setTimeout(() => toast.remove(), 500);
-    }, 4000);
+const container = document.getElementById('toast-container');
+const toast = document.createElement('div');
+toast.className = 'toast';
+toast.innerHTML = `
+<div class="toast-icon">${skill.icon || '📦'}</div>
+<div class="toast-content">
+<div class="toast-title">Extension Installed</div>
+<div class="toast-desc">Extension '${skill.name}' is now active.</div>
+<div class="toast-buttons">
+<button class="toast-btn">Don't Show Again</button>
+<button class="toast-btn" style="background:#3c3c3c;">Manage</button>
+</div>
+</div>
+`;
+
+container.appendChild(toast);
+
+// 5秒后自动消失
+setTimeout(() => {
+toast.style.animation = 'fadeOut 0.5s forwards';
+setTimeout(() => toast.remove(), 500);
+}, 4000);
 }
 
 // --- 模式选择 ---
 function startPvE() {
-    if(isGameActive) if(!confirm("当前正在游戏中，确定要重新开始吗？")) return;
-    if(conn) { conn.close(); conn = null; }
+if(isGameActive) if(!confirm("当前正在游戏中，确定要重新开始吗？")) return;
+if(conn) { conn.close(); conn = null; }
 
-    gameMode = 'pve';
-    document.getElementById('mode-status').innerText = "Mode: AI (PvE)";
-    document.getElementById('btn-restart').style.display = 'block';
-    
-    startGame(1);
+gameMode = 'pve';
+document.getElementById('mode-status').innerText = "Mode: AI (PvE)";
+document.getElementById('btn-restart').style.display = 'block';
+
+startGame(1);
 }
 
 // --- PeerJS (PvP) ---
 function initPeer(customId) {
-    const config = { debug: 1 };
-    peer = customId ? new Peer(customId, config) : new Peer(null, config);
+const config = { debug: 1 };
+peer = customId ? new Peer(customId, config) : new Peer(null, config);
 
-    peer.on('open', (id) => {
-        myPeerId = id;
-        log(`ID已生成: ${id}`, 'success');
-        document.getElementById('mode-status').innerText = `ID: ${id}`;
-        document.getElementById('my-id-input').disabled = true;
-        document.getElementById('btn-host').disabled = true;
-        document.getElementById('btn-join').disabled = true;
-    });
+peer.on('open', (id) => {
+myPeerId = id;
+log(`ID已生成: ${id}`, 'success');
+document.getElementById('mode-status').innerText = `ID: ${id}`;
+document.getElementById('my-id-input').disabled = true;
+document.getElementById('btn-host').disabled = true;
+document.getElementById('btn-join').disabled = true;
+});
 
-    peer.on('error', (err) => {
-        log(`错误: ${err.type}`, 'error');
-        if(err.type === 'unavailable-id') alert("ID被占用");
-    });
+peer.on('error', (err) => {
+log(`错误: ${err.type}`, 'error');
+if(err.type === 'unavailable-id') alert("ID被占用");
+});
 
-    peer.on('connection', (c) => {
-        if (conn) { c.close(); return; }
-        conn = c;
-        setupConnection();
-        log(`客户端 ${c.peer} 已连接`, 'success');
-        gameMode = 'pvp';
-        startGame(1);
-    });
+peer.on('connection', (c) => {
+if (conn) { c.close(); return; }
+conn = c;
+setupConnection();
+log(`客户端 ${c.peer} 已连接`, 'success');
+gameMode = 'pvp';
+startGame(1);
+});
 }
 
 function createGame() {
-    const id = document.getElementById('my-id-input').value.trim();
-    if (!id) return alert("请输入房间号");
-    initPeer(id);
-    log("正在创建主机...", 'info');
+const id = document.getElementById('my-id-input').value.trim();
+if (!id) return alert("请输入房间号");
+initPeer(id);
+log("正在创建主机...", 'info');
 }
 
 function joinGame() {
-    const hostId = document.getElementById('my-id-input').value.trim();
-    if (!hostId) return alert("请输入主机ID");
-    initPeer(null);
-    const checkOpen = setInterval(() => {
-        if (peer && !peer.disconnected && !peer.destroyed && myPeerId) {
-            clearInterval(checkOpen);
-            log(`正在连接 ${hostId}...`, 'info');
-            conn = peer.connect(hostId);
-            setupConnection();
-        }
-    }, 200);
+const hostId = document.getElementById('my-id-input').value.trim();
+if (!hostId) return alert("请输入主机ID");
+initPeer(null);
+const checkOpen = setInterval(() => {
+if (peer && !peer.disconnected && !peer.destroyed && myPeerId) {
+clearInterval(checkOpen);
+log(`正在连接 ${hostId}...`, 'info');
+conn = peer.connect(hostId);
+setupConnection();
+}
+}, 200);
 }
 
 function setupConnection() {
-    document.getElementById('btn-restart').style.display = 'block';
-    gameMode = 'pvp';
+document.getElementById('btn-restart').style.display = 'block';
+gameMode = 'pvp';
 
-    conn.on('open', () => {
-        log("连接建立成功！", 'success');
-        if (myRole === 0) startGame(2);
-    });
+conn.on('open', () => {
+log("连接建立成功！", 'success');
+if (myRole === 0) startGame(2);
+});
 
-    conn.on('data', (data) => {
-        handleNetworkData(data);
-    });
+conn.on('data', (data) => {
+handleNetworkData(data);
+});
 
-    conn.on('close', () => {
-        log("连接已断开", 'error');
-        alert("对方已断开连接");
-        location.reload();
-    });
+conn.on('close', () => {
+log("连接已断开", 'error');
+alert("对方已断开连接");
+location.reload();
+});
 }
 
 function handleNetworkData(data) {
-    if(data.skillName) {
-        showSkillEffect(data.skillName, "REMOTE EXECUTION");
-    }
+if(data.skillName) {
+showSkillEffect(data.skillName, "REMOTE EXECUTION");
+}
 
-    switch (data.type) {
-        case 'move':
-            applyMoveLocal(data.index, data.player);
-            handleTurnChange(data.nextTurn);
-            break;
-        case 'multi_move':
-            data.indices.forEach(idx => applyMoveLocal(idx, data.player));
-            handleTurnChange(data.nextTurn);
-            log(`对方使用了 [${data.skillName}]!`, 'warn');
-            break;
-        case 'remove':
-            // 收到对方移除指令，本地也标记为虚空
-            markCellAsVoid(data.index);
-            handleTurnChange(data.nextTurn);
-            log(`对方使用了 [${data.skillName}]!`, 'warn');
-            break;
-        case 'shuffle_board':
-            boardState = data.newState;
-            voidTracker = []; // 洗牌后清空虚空记录
-            refreshBoardUI();
-            handleTurnChange(data.nextTurn);
-            log(`对方使用了 [${data.skillName}]!`, 'warn');
-            checkFullBoardWin();
-            break;
-        case 'reset_hard_request':
-            handleResetHardRequest(data.nextTurn, data.skillName);
-            break;
-        case 'force_win':
-            log(`对方使用了 [${data.skillName}]!`, 'error');
-            endGame(data.winner);
-            break;
-        case 'update_hand_count':
-            updateOpponentCardCount(data.count);
-            break;
-        case 'restart':
-            log("对方请求重新开始", 'info');
-            resetGame();
-            break;
-        case 'chat':
-            log(`[Chat]: ${data.msg}`, 'info');
-            break;
-    }
+switch (data.type) {
+case 'move':
+applyMoveLocal(data.index, data.player);
+handleTurnChange(data.nextTurn);
+break;
+case 'multi_move':
+data.indices.forEach(idx => applyMoveLocal(idx, data.player));
+handleTurnChange(data.nextTurn);
+log(`对方使用了 [${data.skillName}]!`, 'warn');
+break;
+case 'remove':
+// 收到对方移除指令，本地也标记为虚空
+markCellAsVoid(data.index);
+handleTurnChange(data.nextTurn);
+log(`对方使用了 [${data.skillName}]!`, 'warn');
+break;
+case 'shuffle_board':
+boardState = data.newState;
+voidTracker = []; // 洗牌后清空虚空记录
+refreshBoardUI();
+handleTurnChange(data.nextTurn);
+log(`对方使用了 [${data.skillName}]!`, 'warn');
+checkFullBoardWin();
+break;
+case 'reset_hard_request':
+handleResetHardRequest(data.nextTurn, data.skillName);
+break;
+case 'force_win':
+log(`对方使用了 [${data.skillName}]!`, 'error');
+endGame(data.winner);
+break;
+case 'update_hand_count':
+updateOpponentCardCount(data.count);
+break;
+case 'restart':
+log("对方请求重新开始", 'info');
+resetGame();
+break;
+case 'chat':
+log(`[Chat]: ${data.msg}`, 'info');
+break;
+}
 }
 
 // 新增：更新对手卡片数量显示
 function updateOpponentCardCount(count) {
-    document.getElementById('opponent-cards').innerText = `Opponent Cards: ${count}`;
+document.getElementById('opponent-cards').innerText = `Opponent Cards: ${count}`;
 }
 
 // 发送自己的手牌数量给对方
 function broadcastHandCount() {
-    if (gameMode === 'pvp' && conn && conn.open) {
-        conn.send({ type: 'update_hand_count', count: mySkills.length });
-    }
+if (gameMode === 'pvp' && conn && conn.open) {
+conn.send({ type: 'update_hand_count', count: mySkills.length });
+}
 }
 
 // 修改：处理 Reset Hard 请求，增加随机补偿机制
 function handleResetHardRequest(nextTurn, skillName) {
-    const lostCount = mySkills.length;
-    
-    if (lostCount > 0) {
-        // 1. 清空手牌
-        mySkills = [];
-        renderSkillCards();
-        broadcastHandCount(); // 通知对方我没牌了
-        
-        log(`[${skillName || 'Git Reset'}]: 丢失 ${lostCount} 张手牌`, 'error');
-        showSkillEffect(skillName || "GIT RESET", `LOST ${lostCount} CARDS`);
+const lostCount = mySkills.length;
 
-        // 2. 补偿机制：随机落子
-        setTimeout(() => {
-            log(`触发补偿机制: 随机生成 ${lostCount} 颗棋子`, 'info');
-            const emptyIndices = getEmptyIndices();
-            const targets = [];
-            
-            // 防止死循环，取最小值
-            const spawnCount = Math.min(lostCount, emptyIndices.length);
-            
-            for(let i=0; i<spawnCount; i++) {
-                const r = Math.floor(Math.random() * emptyIndices.length);
-                targets.push(emptyIndices[r]);
-                emptyIndices.splice(r, 1);
-            }
+if (lostCount > 0) {
+// 1. 清空手牌
+mySkills = [];
+renderSkillCards();
+broadcastHandCount(); // 通知对方我没牌了
 
-            // 落子
-            targets.forEach(idx => applyMoveLocal(idx, myRole));
-            
-            // 如果是PVP，需要告诉对方我因为补偿机制落子了
-            if (gameMode === 'pvp' && conn) {
-                // 这里复用 multi_move 类型，但不需要 skillName，因为是被动触发
-                conn.send({ 
-                    type: 'multi_move', 
-                    indices: targets, 
-                    player: myRole, 
-                    nextTurn: nextTurn, // 保持原来的 nextTurn
-                    skillName: 'AUTO RECOVERY' 
-                });
-            }
+log(`[${skillName || 'Git Reset'}]: 丢失 ${lostCount} 张手牌`, 'error');
+showSkillEffect(skillName || "GIT RESET", `LOST ${lostCount} CARDS`);
 
-            // 检查是否因为补偿而获胜
-            let won = false;
-            for (let t of targets) { if (checkWin(t, myRole)) { won = true; break; } }
-            
-            if (won) {
-                endGame(myRole);
-                if (gameMode === 'pvp' && conn) conn.send({ type: 'force_win', winner: myRole, skillName: 'AUTO RECOVERY' });
-            } else {
-                handleTurnChange(nextTurn);
-            }
+// 2. 补偿机制：随机落子
+setTimeout(() => {
+log(`触发补偿机制: 随机生成 ${lostCount} 颗棋子`, 'info');
+const emptyIndices = getEmptyIndices();
+const targets = [];
 
-        }, 1500); // 延迟一点执行，让玩家看清特效
+// 防止死循环，取最小值
+const spawnCount = Math.min(lostCount, emptyIndices.length);
 
-    } else {
-        log(`[${skillName}]: 对方试图清空手牌，但你空空如也`, 'info');
-        handleTurnChange(nextTurn);
-    }
+for(let i=0; i<spawnCount; i++) {
+const r = Math.floor(Math.random() * emptyIndices.length);
+targets.push(emptyIndices[r]);
+emptyIndices.splice(r, 1);
+}
+
+// 落子
+targets.forEach(idx => applyMoveLocal(idx, myRole));
+
+// 如果是PVP，需要告诉对方我因为补偿机制落子了
+if (gameMode === 'pvp' && conn) {
+// 这里复用 multi_move 类型，但不需要 skillName，因为是被动触发
+conn.send({
+type: 'multi_move',
+indices: targets,
+player: myRole,
+nextTurn: nextTurn, // 保持原来的 nextTurn
+skillName: 'AUTO RECOVERY'
+});
+}
+
+// 检查是否因为补偿而获胜
+let won = false;
+for (let t of targets) { if (checkWin(t, myRole)) { won = true; break; } }
+
+if (won) {
+endGame(myRole);
+if (gameMode === 'pvp' && conn) conn.send({ type: 'force_win', winner: myRole, skillName: 'AUTO RECOVERY' });
+} else {
+handleTurnChange(nextTurn);
+}
+
+}, 1500); // 延迟一点执行，让玩家看清特效
+
+} else {
+log(`[${skillName}]: 对方试图清空手牌，但你空空如也`, 'info');
+handleTurnChange(nextTurn);
+}
 }
 
 // --- 回合管理 ---
 function handleTurnChange(nextTurn) {
-    const prevTurn = currentTurn;
-    currentTurn = nextTurn;
+const prevTurn = currentTurn;
+currentTurn = nextTurn;
 
-    // --- 新增逻辑：处理虚空格子的冷却时间 ---
-    for (let i = voidTracker.length - 1; i >= 0; i--) {
-        voidTracker[i].duration--;
-        if (voidTracker[i].duration <= 0) {
-            const idx = voidTracker[i].index;
-            if (boardState[idx] === VOID_STATE) {
-                boardState[idx] = 0; // 恢复为空
-                const cell = boardEl.children[idx];
-                cell.className = 'cell'; // 移除虚空样式
-            }
-            voidTracker.splice(i, 1); // 从追踪器移除
-        }
-    }
-    // ------------------------------------
+// --- 新增逻辑：处理虚空格子的冷却时间 ---
+for (let i = voidTracker.length - 1; i >= 0; i--) {
+voidTracker[i].duration--;
+if (voidTracker[i].duration <= 0) {
+const idx = voidTracker[i].index;
+if (boardState[idx] === VOID_STATE) {
+boardState[idx] = 0; // 恢复为空
+const cell = boardEl.children[idx];
+cell.className = 'cell'; // 移除虚空样式
+}
+voidTracker.splice(i, 1); // 从追踪器移除
+}
+}
+// ------------------------------------
 
-    // 1. 玩家技能获取逻辑：每2回合一次
-    if (currentTurn === myRole && prevTurn !== myRole) {
-        log("轮到你的回合", 'info');
-        
-        playerRoundCount++;
-        renderSkillCards();
+// 1. 玩家技能获取逻辑：每2回合一次
+if (currentTurn === myRole && prevTurn !== myRole) {
+log("轮到你的回合", 'info');
 
-        if (playerRoundCount % 2 === 0) {
-            setTimeout(() => {
-                log("扩展包下载完成 (每2回合)", 'success');
-                autoDrawSkill(mySkills, true);
-            }, 500);
-        }
-    }
+playerRoundCount++;
+renderSkillCards();
 
-    // 2. PvE AI 逻辑
-    if (gameMode === 'pve' && currentTurn === 2) {
-        updateStatus();
-        if (prevTurn !== 2) {
-            aiRoundCount++;
-            if (aiRoundCount % 2 === 0) {
-                autoDrawSkill(aiSkills, false);
-            }
-        }
-        setTimeout(aiTurnLogic, 1000);
-    } else {
-        updateStatus();
-    }
+if (playerRoundCount % 2 === 0) {
+setTimeout(() => {
+log("扩展包下载完成 (每2回合)", 'success');
+autoDrawSkill(mySkills, true);
+}, 500);
+}
+}
+
+// 2. PvE AI 逻辑
+if (gameMode === 'pve' && currentTurn === 2) {
+updateStatus();
+if (prevTurn !== 2) {
+aiRoundCount++;
+if (aiRoundCount % 2 === 0) {
+autoDrawSkill(aiSkills, false);
+}
+}
+setTimeout(aiTurnLogic, 1000);
+} else {
+updateStatus();
+}
 }
 
 // --- 游戏核心逻辑 ---
 function startGame(role) {
-    myRole = role;
-    currentTurn = 1;
-    isGameActive = true;
-    resetGame(false);
-    
-    // 初始赠送一张技能卡
-    log("正在预加载扩展包...", 'info');
-    autoDrawSkill(mySkills, true);
-    
-    // 如果是PvE，也给AI发一张，保持公平（可选）
-    if (gameMode === 'pve') {
-        autoDrawSkill(aiSkills, false);
-        updateOpponentCardCount(aiSkills.length);
-    }
+myRole = role;
+currentTurn = 1;
+isGameActive = true;
+resetGame(false);
 
-    let roleName = "";
-    if (gameMode === 'pve') {
-        roleName = "玩家 (执黑)";
-    } else {
-        roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
-    }
+// 初始赠送一张技能卡
+log("正在预加载扩展包...", 'info');
 
-    log(`游戏开始: ${roleName}`, 'success');
-    updateStatus();
+// --- 修改点：PvP模式固定给予飞沙走石 ---
+if (gameMode === 'pvp') {
+const startSkill = SKILLS.find(s => s.id === 'destroy'); // 飞沙走石 ID
+if (startSkill) {
+mySkills.push(startSkill);
+// 传递 index 以触发动画
+renderSkillCards(mySkills.length - 1);
+showExtensionInstalledToast(startSkill);
+log(`PvP 初始加载: ${startSkill.name}`, 'success');
+} else {
+// 容错处理
+autoDrawSkill(mySkills, true);
+}
+} else {
+// PvE 保持随机
+autoDrawSkill(mySkills, true);
+}
+// ------------------------------------
+
+// 如果是PvE，也给AI发一张，保持公平（可选）
+if (gameMode === 'pve') {
+autoDrawSkill(aiSkills, false);
+updateOpponentCardCount(aiSkills.length);
+}
+
+let roleName = "";
+if (gameMode === 'pve') {
+roleName = "玩家 (执黑)";
+} else {
+roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
+}
+
+log(`游戏开始: ${roleName}`, 'success');
+updateStatus();
 }
 
 // --- AI 逻辑 (PvE) ---
 function aiTurnLogic() {
-    if (!isGameActive) return;
-    const aiRole = 2;
-    const playerRole = 1;
+if (!isGameActive) return;
+const aiRole = 2;
+const playerRole = 1;
 
-    // AI 尝试使用技能
-    if (aiTryUseSkill(aiRole, playerRole)) {
-        updateOpponentCardCount(aiSkills.length); // 更新AI手牌显示
-        return;
-    }
-    
-    aiMakeMove(aiRole, playerRole);
+// AI 尝试使用技能
+if (aiTryUseSkill(aiRole, playerRole)) {
+updateOpponentCardCount(aiSkills.length); // 更新AI手牌显示
+return;
+}
+
+aiMakeMove(aiRole, playerRole);
 }
 
 function aiTryUseSkill(aiRole, playerRole) {
-    if (aiSkills.length === 0) return false;
+if (aiSkills.length === 0) return false;
 
-    // Force Win
-    const winSkillIdx = aiSkills.findIndex(s => s.id === 'force_win');
-    if (winSkillIdx !== -1) {
-        const skill = aiSkills[winSkillIdx];
-        aiSkills.splice(winSkillIdx, 1);
-        showSkillEffect(skill.name.toUpperCase(), "AI OVERRIDE");
-        endGame(aiRole);
-        return true;
-    }
+// Force Win
+const winSkillIdx = aiSkills.findIndex(s => s.id === 'force_win');
+if (winSkillIdx !== -1) {
+const skill = aiSkills[winSkillIdx];
+aiSkills.splice(winSkillIdx, 1);
+showSkillEffect(skill.name.toUpperCase(), "AI OVERRIDE");
+endGame(aiRole);
+return true;
+}
 
-    // Code Injection (Random)
-    const randomSkillIdx = aiSkills.findIndex(s => s.id === 'random');
-    if (randomSkillIdx !== -1 && Math.random() < 0.3) {
-        const skill = aiSkills[randomSkillIdx];
-        aiSkills.splice(randomSkillIdx, 1);
-        showSkillEffect(skill.name.toUpperCase(), "AI GENERATING...");
-        const emptyIndices = getEmptyIndices();
-        if (emptyIndices.length >= 4) {
-            const targets = [];
-            for(let i=0; i<4; i++) {
-                const r = Math.floor(Math.random() * emptyIndices.length);
-                targets.push(emptyIndices[r]);
-                emptyIndices.splice(r, 1);
-            }
-            targets.forEach(idx => applyMoveLocal(idx, aiRole));
-            let won = false;
-            for (let t of targets) { if (checkWin(t, aiRole)) { won = true; break; } }
-            if (won) endGame(aiRole);
-            else handleTurnChange(playerRole);
-            return true;
-        }
-    }
+// Code Injection (Random)
+const randomSkillIdx = aiSkills.findIndex(s => s.id === 'random');
+if (randomSkillIdx !== -1 && Math.random() < 0.3) {
+const skill = aiSkills[randomSkillIdx];
+aiSkills.splice(randomSkillIdx, 1);
+showSkillEffect(skill.name.toUpperCase(), "AI GENERATING...");
+const emptyIndices = getEmptyIndices();
+if (emptyIndices.length >= 4) {
+const targets = [];
+for(let i=0; i<4; i++) {
+const r = Math.floor(Math.random() * emptyIndices.length);
+targets.push(emptyIndices[r]);
+emptyIndices.splice(r, 1);
+}
+targets.forEach(idx => applyMoveLocal(idx, aiRole));
+let won = false;
+for (let t of targets) { if (checkWin(t, aiRole)) { won = true; break; } }
+if (won) endGame(aiRole);
+else handleTurnChange(playerRole);
+return true;
+}
+}
 
-    // Destroy
-    const destroySkillIdx = aiSkills.findIndex(s => s.id === 'destroy');
-    if (destroySkillIdx !== -1 && Math.random() < 0.3) {
-        const playerPieces = [];
-        boardState.forEach((v, i) => { if(v === playerRole) playerPieces.push(i); });
-        if (playerPieces.length > 0) {
-            const skill = aiSkills[destroySkillIdx];
-            aiSkills.splice(destroySkillIdx, 1);
-            const target = playerPieces[Math.floor(Math.random() * playerPieces.length)];
-            // AI 使用 Destroy，也标记为虚空
-            markCellAsVoid(target);
-            showSkillEffect(skill.name.toUpperCase(), "AI ROLLEDBACK CHANGES");
-            handleTurnChange(aiRole);
-            return true;
-        }
-    }
+// Destroy
+const destroySkillIdx = aiSkills.findIndex(s => s.id === 'destroy');
+if (destroySkillIdx !== -1 && Math.random() < 0.3) {
+const playerPieces = [];
+boardState.forEach((v, i) => { if(v === playerRole) playerPieces.push(i); });
+if (playerPieces.length > 0) {
+const skill = aiSkills[destroySkillIdx];
+aiSkills.splice(destroySkillIdx, 1);
+const target = playerPieces[Math.floor(Math.random() * playerPieces.length)];
+// AI 使用 Destroy，也标记为虚空
+markCellAsVoid(target);
+showSkillEffect(skill.name.toUpperCase(), "AI ROLLEDBACK CHANGES");
+handleTurnChange(aiRole);
+return true;
+}
+}
 
-    // Reset Hard (AI 对玩家使用)
-    const resetSkillIdx = aiSkills.findIndex(s => s.id === 'reset_hard');
-    if (resetSkillIdx !== -1 && mySkills.length >= 2 && Math.random() < 0.5) {
-        const skill = aiSkills[resetSkillIdx];
-        aiSkills.splice(resetSkillIdx, 1);
-        showSkillEffect(skill.name.toUpperCase(), "AI RESETTING YOU");
-        // 触发玩家侧的 Reset 逻辑
-        handleResetHardRequest(playerRole, skill.name);
-        return true;
-    }
+// Reset Hard (AI 对玩家使用)
+const resetSkillIdx = aiSkills.findIndex(s => s.id === 'reset_hard');
+if (resetSkillIdx !== -1 && mySkills.length >= 2 && Math.random() < 0.5) {
+const skill = aiSkills[resetSkillIdx];
+aiSkills.splice(resetSkillIdx, 1);
+showSkillEffect(skill.name.toUpperCase(), "AI RESETTING YOU");
+// 触发玩家侧的 Reset 逻辑
+handleResetHardRequest(aiRole, skill.name);
+return true;
+}
 
-    // Double Move
-    const doubleSkillIdx = aiSkills.findIndex(s => s.id === 'double');
-    if (doubleSkillIdx !== -1 && Math.random() < 0.3) {
-        const skill = aiSkills[doubleSkillIdx];
-        aiSkills.splice(doubleSkillIdx, 1);
-        showSkillEffect(skill.name.toUpperCase(), "AI DOUBLE COMMIT");
-        aiMakeMove(aiRole, aiRole);
-        setTimeout(() => { if(isGameActive) aiMakeMove(aiRole, playerRole); }, 800);
-        return true;
-    }
+// Double Move
+const doubleSkillIdx = aiSkills.findIndex(s => s.id === 'double');
+if (doubleSkillIdx !== -1 && Math.random() < 0.3) {
+const skill = aiSkills[doubleSkillIdx];
+aiSkills.splice(doubleSkillIdx, 1);
+showSkillEffect(skill.name.toUpperCase(), "AI DOUBLE COMMIT");
+aiMakeMove(aiRole, aiRole);
+setTimeout(() => { if(isGameActive) aiMakeMove(aiRole, playerRole); }, 800);
+return true;
+}
 
-    return false;
+return false;
 }
 
 function aiMakeMove(aiRole, nextTurnPlayer) {
-    let bestScore = -Infinity;
-    let bestMoves = [];
-    const emptyCells = getEmptyIndices();
+let bestScore = -Infinity;
+let bestMoves = [];
+const emptyCells = getEmptyIndices();
 
-    if (emptyCells.length === 0) return;
+if (emptyCells.length === 0) return;
 
-    if (emptyCells.length === BOARD_SIZE * BOARD_SIZE - 1) {
-        const center = Math.floor(BOARD_SIZE * BOARD_SIZE / 2);
-        applyMoveLocal(center, aiRole);
-        handleTurnChange(nextTurnPlayer);
-        return;
-    }
+if (emptyCells.length === BOARD_SIZE * BOARD_SIZE - 1) {
+const center = Math.floor(BOARD_SIZE * BOARD_SIZE / 2);
+applyMoveLocal(center, aiRole);
+handleTurnChange(nextTurnPlayer);
+return;
+}
 
-    for (let index of emptyCells) {
-        let attackScore = evaluatePoint(index, aiRole);
-        let defenseScore = evaluatePoint(index, 1);
-        let totalScore = attackScore + (defenseScore * 1.1);
+for (let index of emptyCells) {
+let attackScore = evaluatePoint(index, aiRole);
+let defenseScore = evaluatePoint(index, 1);
+let totalScore = attackScore + (defenseScore * 1.1);
 
-        if (totalScore > bestScore) {
-            bestScore = totalScore;
-            bestMoves = [index];
-        } else if (totalScore === bestScore) {
-            bestMoves.push(index);
-        }
-    }
+if (totalScore > bestScore) {
+bestScore = totalScore;
+bestMoves = [index];
+} else if (totalScore === bestScore) {
+bestMoves.push(index);
+}
+}
 
-    const finalMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-    applyMoveLocal(finalMove, aiRole);
+const finalMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+applyMoveLocal(finalMove, aiRole);
 
-    if (checkWin(finalMove, aiRole)) {
-        endGame(aiRole);
-    } else {
-        handleTurnChange(nextTurnPlayer);
-    }
+if (checkWin(finalMove, aiRole)) {
+endGame(aiRole);
+} else {
+handleTurnChange(nextTurnPlayer);
+}
 }
 
 function getEmptyIndices() {
-    const arr = [];
-    // 修改：AI 只会选择状态为 0 的格子，自动忽略 -1 (VOID)
-    for(let i=0; i<boardState.length; i++) if(boardState[i] === 0) arr.push(i);
-    return arr;
+const arr = [];
+// 修改：AI 只会选择状态为 0 的格子，自动忽略 -1 (VOID)
+for(let i=0; i<boardState.length; i++) if(boardState[i] === 0) arr.push(i);
+return arr;
 }
 
 function evaluatePoint(index, role) {
-    const x = index % BOARD_SIZE;
-    const y = Math.floor(index / BOARD_SIZE);
-    let score = 0;
-    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+const x = index % BOARD_SIZE;
+const y = Math.floor(index / BOARD_SIZE);
+let score = 0;
+const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
-    for (let [dx, dy] of directions) {
-        let count = 1; let blocked = 0;
-        for (let i = 1; i < 5; i++) {
-            const nx = x + dx * i, ny = y + dy * i;
-            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) { blocked++; break; }
-            const val = boardState[ny * BOARD_SIZE + nx];
-            if (val === role) count++; else if (val !== 0) { blocked++; break; } else break;
-        }
-        for (let i = 1; i < 5; i++) {
-            const nx = x - dx * i, ny = y - dy * i;
-            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) { blocked++; break; }
-            const val = boardState[ny * BOARD_SIZE + nx];
-            if (val === role) count++; else if (val !== 0) { blocked++; break; } else break;
-        }
-        if (count >= 5) score += 100000;
-        else if (count === 4) score += (blocked === 0 ? 10000 : 1000);
-        else if (count === 3) score += (blocked === 0 ? 1000 : 100);
-        else if (count === 2) score += (blocked === 0 ? 100 : 0);
-    }
-    return score;
+for (let [dx, dy] of directions) {
+let count = 1; let blocked = 0;
+for (let i = 1; i < 5; i++) {
+const nx = x + dx * i, ny = y + dy * i;
+if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) { blocked++; break; }
+const val = boardState[ny * BOARD_SIZE + nx];
+if (val === role) count++; else if (val !== 0) { blocked++; break; } else break;
+}
+for (let i = 1; i < 5; i++) {
+const nx = x - dx * i, ny = y - dy * i;
+if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) { blocked++; break; }
+const val = boardState[ny * BOARD_SIZE + nx];
+if (val === role) count++; else if (val !== 0) { blocked++; break; } else break;
+}
+if (count >= 5) score += 100000;
+else if (count === 4) score += (blocked === 0 ? 10000 : 1000);
+else if (count === 3) score += (blocked === 0 ? 1000 : 100);
+else if (count === 2) score += (blocked === 0 ? 100 : 0);
+}
+return score;
 }
 
 // --- 技能逻辑 UI 更新 ---
 function renderSkillCards(newSkillIndex = -1) {
-    const container = document.getElementById('skills-container');
-    container.innerHTML = '';
-    document.getElementById('skill-count').innerText = `${mySkills.length}/3`;
+const container = document.getElementById('skills-container');
+container.innerHTML = '';
+document.getElementById('skill-count').innerText = `${mySkills.length}/3`;
 
-    mySkills.forEach((skill, index) => {
-        const card = document.createElement('div');
-        card.className = 'skill-card';
-        if (activeSkillMode && activeSkillMode.index === index) card.classList.add('active');
-        if (skill.weight === 1) card.classList.add('ssr-card');
-        
-        // 如果是刚获得的新卡片，添加高亮类
-        if (index === newSkillIndex) card.classList.add('just-added');
+mySkills.forEach((skill, index) => {
+const card = document.createElement('div');
+card.className = 'skill-card';
+if (activeSkillMode && activeSkillMode.index === index) card.classList.add('active');
+if (skill.weight === 1) card.classList.add('ssr-card');
 
-        card.style.borderLeftColor = skill.color;
-        
-        card.innerHTML = `
-            <div class="skill-name" style="color:${skill.color}">
-                ${skill.name} <span style="font-weight:normal; opacity:0.7;">v${skill.weight}</span>
-            </div>
-            <div class="skill-desc">${skill.desc}</div>
-        `;
-        card.onclick = () => activateSkill(index);
-        container.appendChild(card);
-    });
+// 如果是刚获得的新卡片，添加高亮类
+if (index === newSkillIndex) card.classList.add('just-added');
 
-    // 更新技能状态文本：显示充能进度
-    const statusText = document.getElementById('skill-status-text');
-    if (mySkills.length >= 3) {
-        statusText.innerText = "扩展插槽已满 (3/3)";
-        statusText.style.color = "#f48771";
-    } else {
-        const progress = playerRoundCount % 2;
-        statusText.innerText = `技能充能中: ${progress}/2 回合`;
-        statusText.style.color = "#888";
-    }
-    
-    // 每次渲染手牌都广播一次数量
-    broadcastHandCount();
+card.style.borderLeftColor = skill.color;
+
+card.innerHTML = `
+<div class="skill-name" style="color:${skill.color}">
+${skill.name} <span style="font-weight:normal; opacity:0.7;">v${skill.weight}</span>
+</div>
+<div class="skill-desc">${skill.desc}</div>
+`;
+card.onclick = () => activateSkill(index);
+container.appendChild(card);
+});
+
+// 更新技能状态文本：显示充能进度
+const statusText = document.getElementById('skill-status-text');
+if (mySkills.length >= 3) {
+statusText.innerText = "扩展插槽已满 (3/3)";
+statusText.style.color = "#f48771";
+} else {
+const progress = playerRoundCount % 2;
+statusText.innerText = `技能充能中: ${progress}/2 回合`;
+statusText.style.color = "#888";
+}
+
+// 每次渲染手牌都广播一次数量
+broadcastHandCount();
 }
 
 function autoDrawSkill(targetArray, renderUI) {
-    if (!isGameActive) return;
-    if (targetArray.length >= 3) return;
+if (!isGameActive) return;
+if (targetArray.length >= 3) return;
 
-    const totalWeight = SKILLS.reduce((sum, skill) => sum + skill.weight, 0);
-    let randomNum = Math.random() * totalWeight;
-    let selectedSkill = null;
-    for (const skill of SKILLS) {
-        if (randomNum < skill.weight) { selectedSkill = skill; break; }
-        randomNum -= skill.weight;
-    }
-    if (!selectedSkill) selectedSkill = SKILLS[0];
+const totalWeight = SKILLS.reduce((sum, skill) => sum + skill.weight, 0);
+let randomNum = Math.random() * totalWeight;
+let selectedSkill = null;
+for (const skill of SKILLS) {
+if (randomNum < skill.weight) { selectedSkill = skill; break; }
+randomNum -= skill.weight;
+}
+if (!selectedSkill) selectedSkill = SKILLS[0];
 
-    targetArray.push(selectedSkill);
-    if (renderUI) {
-        // 传递新卡片的索引以触发侧边栏动画
-        renderSkillCards(targetArray.length - 1);
-        // 触发右下角 Toast 通知
-        showExtensionInstalledToast(selectedSkill);
-        log(`已安装扩展: ${selectedSkill.name}`, 'success');
-    } else {
-        // 如果是AI抽卡，更新UI显示
-        if (gameMode === 'pve' && targetArray === aiSkills) {
-            updateOpponentCardCount(aiSkills.length);
-        }
-    }
+targetArray.push(selectedSkill);
+if (renderUI) {
+// 传递新卡片的索引以触发侧边栏动画
+renderSkillCards(targetArray.length - 1);
+// 触发右下角 Toast 通知
+showExtensionInstalledToast(selectedSkill);
+log(`已安装扩展: ${selectedSkill.name}`, 'success');
+} else {
+// 如果是AI抽卡，更新UI显示
+if (gameMode === 'pve' && targetArray === aiSkills) {
+updateOpponentCardCount(aiSkills.length);
+}
+}
 }
 
 function activateSkill(index) {
-    if (!isGameActive || currentTurn !== myRole) {
-        log("等待进程闲置 (非你的回合)", 'error');
-        return;
-    }
+if (!isGameActive || currentTurn !== myRole) {
+log("等待进程闲置 (非你的回合)", 'error');
+return;
+}
 
-    const targetSkill = mySkills[index];
-    if (activeSkillMode && activeSkillMode.index === index) {
-        activeSkillMode = null;
-        boardEl.className = '';
-        renderSkillCards();
-        return;
-    }
+const targetSkill = mySkills[index];
+if (activeSkillMode && activeSkillMode.index === index) {
+activeSkillMode = null;
+boardEl.className = '';
+renderSkillCards();
+return;
+}
 
-    if (['force_win', 'shuffle', 'reset_hard'].includes(targetSkill.id)) {
-        if (confirm(`确定执行 [${targetSkill.name}] 吗？`)) {
-            activeSkillMode = { id: targetSkill.id, index: index };
-            executeInstantSkill(targetSkill);
-        }
-        return;
-    }
+if (['force_win', 'shuffle', 'reset_hard'].includes(targetSkill.id)) {
+if (confirm(`确定执行 [${targetSkill.name}] 吗？`)) {
+activeSkillMode = { id: targetSkill.id, index: index };
+executeInstantSkill(targetSkill);
+}
+return;
+}
 
-    activeSkillMode = { id: targetSkill.id, index: index };
-    boardEl.className = '';
+activeSkillMode = { id: targetSkill.id, index: index };
+boardEl.className = '';
 
-    // 使用 targetSkill.name 动态显示特效
-    if (targetSkill.id === 'double') {
-        log(`模式切换: ${targetSkill.name} (连下两子)`, 'warn');
-        doubleMoveCount = 2;
-        showSkillEffect(targetSkill.name.toUpperCase(), "SELECT 2 TARGETS");
-    } else if (targetSkill.id === 'destroy') {
-        log(`模式切换: ${targetSkill.name} (点击移除棋子)`, 'warn');
-        boardEl.classList.add('destroy-mode');
-        showSkillEffect(targetSkill.name.toUpperCase(), "SELECT TARGET TO REVERT");
-    } else if (targetSkill.id === 'random') {
-        log(`模式切换: ${targetSkill.name} (点击棋盘注入)`, 'warn');
-        boardEl.classList.add('random-mode');
-        showSkillEffect(targetSkill.name.toUpperCase(), "CLICK BOARD TO EXECUTE");
-    }
+// 使用 targetSkill.name 动态显示特效
+if (targetSkill.id === 'double') {
+log(`模式切换: ${targetSkill.name} (连下两子)`, 'warn');
+doubleMoveCount = 2;
+showSkillEffect(targetSkill.name.toUpperCase(), "SELECT 2 TARGETS");
+} else if (targetSkill.id === 'destroy') {
+log(`模式切换: ${targetSkill.name} (点击移除棋子)`, 'warn');
+boardEl.classList.add('destroy-mode');
+showSkillEffect(targetSkill.name.toUpperCase(), "SELECT TARGET TO REVERT");
+} else if (targetSkill.id === 'random') {
+log(`模式切换: ${targetSkill.name} (点击棋盘注入)`, 'warn');
+boardEl.classList.add('random-mode');
+showSkillEffect(targetSkill.name.toUpperCase(), "CLICK BOARD TO EXECUTE");
+}
 
-    renderSkillCards();
+renderSkillCards();
 }
 
 function consumeSkill() {
-    if (activeSkillMode !== null) {
-        mySkills.splice(activeSkillMode.index, 1);
-        activeSkillMode = null;
-        boardEl.className = '';
-        renderSkillCards();
-    }
+if (activeSkillMode !== null) {
+mySkills.splice(activeSkillMode.index, 1);
+activeSkillMode = null;
+boardEl.className = '';
+renderSkillCards();
+}
 }
 
 function executeInstantSkill(skill) {
-    // 动态使用技能名称
-    showSkillEffect(skill.name.toUpperCase(), "EXECUTING...");
+// 动态使用技能名称
+showSkillEffect(skill.name.toUpperCase(), "EXECUTING...");
 
-    if (skill.id === 'force_win') {
-        consumeSkill();
-        if (gameMode === 'pvp' && conn) conn.send({ type: 'force_win', winner: myRole, skillName: skill.name });
-        endGame(myRole);
-    }
-    else if (skill.id === 'shuffle') {
-        let pieces = [];
-        boardState.forEach(p => { if (p > 0) pieces.push(p); }); // 只收集 1 和 2，忽略 -1
-        if (pieces.length === 0) { activeSkillMode = null; return; }
+if (skill.id === 'force_win') {
+consumeSkill();
+if (gameMode === 'pvp' && conn) conn.send({ type: 'force_win', winner: myRole, skillName: skill.name });
+endGame(myRole);
+}
+else if (skill.id === 'shuffle') {
+let pieces = [];
+boardState.forEach(p => { if (p > 0) pieces.push(p); }); // 只收集 1 和 2，忽略 -1
+if (pieces.length === 0) { activeSkillMode = null; return; }
 
-        let indices = Array.from({length: BOARD_SIZE * BOARD_SIZE}, (_, i) => i);
-        for (let i = indices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
-        boardState.fill(0);
-        voidTracker = []; // 洗牌后清空虚空记录
-        pieces.forEach((p, i) => { boardState[indices[i]] = p; });
-        refreshBoardUI();
-        consumeSkill();
+let indices = Array.from({length: BOARD_SIZE * BOARD_SIZE}, (_, i) => i);
+for (let i = indices.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[indices[i], indices[j]] = [indices[j], indices[i]];
+}
+boardState.fill(0);
+voidTracker = []; // 洗牌后清空虚空记录
+pieces.forEach((p, i) => { boardState[indices[i]] = p; });
+refreshBoardUI();
+consumeSkill();
 
-        const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+const nextTurnPlayer = (myRole === 1 ? 2 : 1);
 
-        if (gameMode === 'pvp' && conn) {
-            conn.send({ type: 'shuffle_board', newState: boardState, nextTurn: nextTurnPlayer, skillName: skill.name });
-        }
+if (gameMode === 'pvp' && conn) {
+conn.send({ type: 'shuffle_board', newState: boardState, nextTurn: nextTurnPlayer, skillName: skill.name });
+}
 
-        checkFullBoardWin();
-        handleTurnChange(nextTurnPlayer);
-    }
-    else if (skill.id === 'reset_hard') {
-        consumeSkill();
-        const nextTurnPlayer = (myRole === 1 ? 2 : 1);
-        if (gameMode === 'pvp' && conn) conn.send({ type: 'reset_hard_request', nextTurn: nextTurnPlayer, skillName: skill.name });
-        else if (gameMode === 'pve') {
-            // AI 逻辑：AI失去卡片，AI随机落子
-            const lostCount = aiSkills.length;
-            aiSkills = [];
-            updateOpponentCardCount(0);
-            
-            if (lostCount > 0) {
-                 log(`AI 丢失 ${lostCount} 张手牌，触发补偿机制`, 'warn');
-                 const emptyIndices = getEmptyIndices();
-                 const targets = [];
-                 const spawnCount = Math.min(lostCount, emptyIndices.length);
-                 for(let i=0; i<spawnCount; i++) {
-                    const r = Math.floor(Math.random() * emptyIndices.length);
-                    targets.push(emptyIndices[r]);
-                    emptyIndices.splice(r, 1);
-                 }
-                 // AI 落子 (2)
-                 targets.forEach(idx => applyMoveLocal(idx, 2));
-                 
-                 let won = false;
-                 for (let t of targets) { if (checkWin(t, 2)) { won = true; break; } }
-                 if (won) endGame(2);
-            }
-        }
-        handleTurnChange(nextTurnPlayer);
-    }
+checkFullBoardWin();
+handleTurnChange(nextTurnPlayer);
+}
+else if (skill.id === 'reset_hard') {
+consumeSkill();
+// 明确指定下一个回合是对方 (跳过本回合)
+const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+
+if (gameMode === 'pvp' && conn) {
+conn.send({ type: 'reset_hard_request', nextTurn: nextTurnPlayer, skillName: skill.name });
+handleTurnChange(nextTurnPlayer); // 本地也立即切换回合
+}
+else if (gameMode === 'pve') {
+// AI 逻辑：AI失去卡片，AI随机落子
+const lostCount = aiSkills.length;
+aiSkills = [];
+updateOpponentCardCount(0);
+
+if (lostCount > 0) {
+log(`AI 丢失 ${lostCount} 张手牌，触发补偿机制`, 'warn');
+const emptyIndices = getEmptyIndices();
+const targets = [];
+const spawnCount = Math.min(lostCount, emptyIndices.length);
+for(let i=0; i<spawnCount; i++) {
+const r = Math.floor(Math.random() * emptyIndices.length);
+targets.push(emptyIndices[r]);
+emptyIndices.splice(r, 1);
+}
+
+// 增加延时，让玩家看清“对方获得补偿 -> 对方开始思考”的过程，体现“跳过回合”
+setTimeout(() => {
+// AI 落子补偿 (2)
+targets.forEach(idx => applyMoveLocal(idx, 2));
+
+let won = false;
+for (let t of targets) { if (checkWin(t, 2)) { won = true; break; } }
+
+if (won) {
+endGame(2);
+} else {
+// 补偿结束后，将回合权交给 AI，AI 开始正常思考下棋
+handleTurnChange(nextTurnPlayer);
+}
+}, 1000);
+} else {
+// 即使没有手牌，也要跳过回合
+handleTurnChange(nextTurnPlayer);
+}
+}
+}
 }
 
 function refreshBoardUI() {
-    const cells = boardEl.children;
-    for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i];
-        cell.innerHTML = '';
-        cell.className = 'cell'; // 重置class
-        const val = boardState[i];
+const cells = boardEl.children;
+for (let i = 0; i < cells.length; i++) {
+const cell = cells[i];
+cell.innerHTML = '';
+cell.className = 'cell'; // 重置class
+const val = boardState[i];
 
-        if (val === VOID_STATE) {
-            cell.classList.add('void');
-        } else if (val !== 0) {
-            const piece = document.createElement('div');
-            piece.className = `piece ${val === 1 ? 'black' : 'white'} last`;
-            cell.appendChild(piece);
-        }
-    }
+if (val === VOID_STATE) {
+cell.classList.add('void');
+} else if (val !== 0) {
+const piece = document.createElement('div');
+piece.className = `piece ${val === 1 ? 'black' : 'white'} last`;
+cell.appendChild(piece);
+}
+}
 }
 
 function handleCellClick(index) {
-    if (!isGameActive) return;
-    if (currentTurn !== myRole) {
-        if (gameMode === 'pve' && currentTurn === 2) return;
-        if (gameMode === 'pvp') return;
-    }
+if (!isGameActive) return;
+if (currentTurn !== myRole) {
+if (gameMode === 'pve' && currentTurn === 2) return;
+if (gameMode === 'pvp') return;
+}
 
-    // 检查是否点击了虚空区域
-    if (boardState[index] === VOID_STATE) {
-        log("Error: Cannot write to a reverted commit (Void Area).", 'error');
-        return;
-    }
+// 检查是否点击了虚空区域
+if (boardState[index] === VOID_STATE) {
+log("Error: Cannot write to a reverted commit (Void Area).", 'error');
+return;
+}
 
-    if (activeSkillMode && activeSkillMode.id === 'destroy') {
-        handleDestroyClick(index);
-        return;
-    }
-    if (activeSkillMode && activeSkillMode.id === 'random') {
-        handleRandomSpawn();
-        return;
-    }
+if (activeSkillMode && activeSkillMode.id === 'destroy') {
+handleDestroyClick(index);
+return;
+}
+if (activeSkillMode && activeSkillMode.id === 'random') {
+handleRandomSpawn();
+return;
+}
 
-    if (boardState[index] !== 0) return;
+if (boardState[index] !== 0) return;
 
-    applyMoveLocal(index, myRole);
+applyMoveLocal(index, myRole);
 
-    let nextTurnPlayer = (myRole === 1 ? 2 : 1);
-    
-    if (activeSkillMode && activeSkillMode.id === 'double') {
-        doubleMoveCount--;
-        if (doubleMoveCount > 0) {
-            nextTurnPlayer = myRole;
-            log(`${mySkills[activeSkillMode.index].name}: 等待第二次提交`, 'success');
-        } else {
-            consumeSkill();
-            if (gameMode === 'pvp' && conn) conn.send({ type: 'chat', msg: "Double Move Completed" });
-        }
-    }
+let nextTurnPlayer = (myRole === 1 ? 2 : 1);
 
-    if (gameMode === 'pvp' && conn && conn.open) {
-        conn.send({ type: 'move', index: index, player: myRole, nextTurn: nextTurnPlayer });
-    }
+if (activeSkillMode && activeSkillMode.id === 'double') {
+doubleMoveCount--;
+if (doubleMoveCount > 0) {
+nextTurnPlayer = myRole;
+log(`${mySkills[activeSkillMode.index].name}: 等待第二次提交`, 'success');
+} else {
+consumeSkill();
+if (gameMode === 'pvp' && conn) conn.send({ type: 'chat', msg: "Double Move Completed" });
+}
+}
 
-    if (checkWin(index, myRole)) {
-        endGame(myRole);
-    } else {
-        handleTurnChange(nextTurnPlayer);
-    }
+if (gameMode === 'pvp' && conn && conn.open) {
+conn.send({ type: 'move', index: index, player: myRole, nextTurn: nextTurnPlayer });
+}
+
+if (checkWin(index, myRole)) {
+endGame(myRole);
+} else {
+handleTurnChange(nextTurnPlayer);
+}
 }
 
 function handleDestroyClick(index) {
-    const targetOwner = boardState[index];
-    const opponent = (myRole === 1 ? 2 : 1);
+const targetOwner = boardState[index];
+const opponent = (myRole === 1 ? 2 : 1);
 
-    if (targetOwner !== opponent) {
-        log("Permission Denied: 只能 Revert 对方的代码", 'error');
-        return;
-    }
+if (targetOwner !== opponent) {
+log("Permission Denied: 只能 Revert 对方的代码", 'error');
+return;
+}
 
-    // 修改：调用标记虚空函数，而不是简单的 remove
-    markCellAsVoid(index);
+// 修改：调用标记虚空函数，而不是简单的 remove
+markCellAsVoid(index);
 
-    // 获取当前技能名称用于发送
-    const skillName = mySkills[activeSkillMode.index].name;
+// 获取当前技能名称用于发送
+const skillName = mySkills[activeSkillMode.index].name;
 
-    consumeSkill();
-    const nextTurnPlayer = myRole;
+consumeSkill();
+const nextTurnPlayer = myRole;
 
-    if (gameMode === 'pvp' && conn) {
-        conn.send({ type: 'remove', index: index, nextTurn: nextTurnPlayer, skillName: skillName });
-    }
+if (gameMode === 'pvp' && conn) {
+conn.send({ type: 'remove', index: index, nextTurn: nextTurnPlayer, skillName: skillName });
+}
 
-    handleTurnChange(nextTurnPlayer);
-    activeSkillMode = null;
-    boardEl.className = '';
-    renderSkillCards();
+handleTurnChange(nextTurnPlayer);
+activeSkillMode = null;
+boardEl.className = '';
+renderSkillCards();
 }
 
 // 新增：将格子标记为虚空状态，并设置持续回合
 function markCellAsVoid(index) {
-    boardState[index] = VOID_STATE; // 设置状态为 -1
-    const cell = boardEl.children[index];
-    cell.innerHTML = ''; // 移除棋子
-    cell.className = 'cell void'; // 添加虚空样式
-    
-    // 修改：duration 设置为 4，确保能持续3个完整的回合交替
-    // 流程：释放(4) -> 对手(3) -> 我(2) -> 对手(1) -> 我(0,解锁)
-    voidTracker.push({ index: index, duration: 6 });
+boardState[index] = VOID_STATE; // 设置状态为 -1
+const cell = boardEl.children[index];
+cell.innerHTML = ''; // 移除棋子
+cell.className = 'cell void'; // 添加虚空样式
+
+// 修改：duration 设置为 4，确保能持续3个完整的回合交替
+// 流程：释放(4) -> 对手(3) -> 我(2) -> 对手(1) -> 我(0,解锁)
+voidTracker.push({ index: index, duration: 6 });
 }
 
 function handleRandomSpawn() {
-    const emptyIndices = getEmptyIndices();
-    if (emptyIndices.length < 4) {
-        log("内存溢出: 空间不足", 'error');
-        return;
-    }
+const emptyIndices = getEmptyIndices();
+if (emptyIndices.length < 4) {
+log("内存溢出: 空间不足", 'error');
+return;
+}
 
-    const targets = [];
-    for(let i=0; i<4; i++) {
-        const randIndex = Math.floor(Math.random() * emptyIndices.length);
-        targets.push(emptyIndices[randIndex]);
-        emptyIndices.splice(randIndex, 1);
-    }
+const targets = [];
+for(let i=0; i<4; i++) {
+const randIndex = Math.floor(Math.random() * emptyIndices.length);
+targets.push(emptyIndices[randIndex]);
+emptyIndices.splice(randIndex, 1);
+}
 
-    targets.forEach(idx => applyMoveLocal(idx, myRole));
+targets.forEach(idx => applyMoveLocal(idx, myRole));
 
-    // 获取当前技能名称用于发送
-    const skillName = mySkills[activeSkillMode.index].name;
+// 获取当前技能名称用于发送
+const skillName = mySkills[activeSkillMode.index].name;
 
-    consumeSkill();
+consumeSkill();
 
-    const nextTurnPlayer = (myRole === 1 ? 2 : 1);
-    if (gameMode === 'pvp' && conn) {
-        conn.send({ type: 'multi_move', indices: targets, player: myRole, nextTurn: nextTurnPlayer, skillName: skillName });
-    }
+const nextTurnPlayer = (myRole === 1 ? 2 : 1);
+if (gameMode === 'pvp' && conn) {
+conn.send({ type: 'multi_move', indices: targets, player: myRole, nextTurn: nextTurnPlayer, skillName: skillName });
+}
 
-    let won = false;
-    for (let t of targets) { if (checkWin(t, myRole)) { won = true; break; } }
+let won = false;
+for (let t of targets) { if (checkWin(t, myRole)) { won = true; break; } }
 
-    if (won) endGame(myRole);
-    else handleTurnChange(nextTurnPlayer);
+if (won) endGame(myRole);
+else handleTurnChange(nextTurnPlayer);
 }
 
 function applyMoveLocal(index, player) {
-    boardState[index] = player;
-    const cell = boardEl.children[index];
-    const piece = document.createElement('div');
-    piece.className = `piece ${player === 1 ? 'black' : 'white'} last`;
-    cell.appendChild(piece);
+boardState[index] = player;
+const cell = boardEl.children[index];
+const piece = document.createElement('div');
+piece.className = `piece ${player === 1 ? 'black' : 'white'} last`;
+cell.appendChild(piece);
 
-    const prevLast = document.querySelectorAll('.piece.last');
-    prevLast.forEach(p => { if(p !== piece) p.classList.remove('last'); });
+const prevLast = document.querySelectorAll('.piece.last');
+prevLast.forEach(p => { if(p !== piece) p.classList.remove('last'); });
 }
 
 // --- 状态更新 ---
 function updateStatus() {
-    const statusEl = document.getElementById('turn-status');
-    const turnIndicatorEl = document.getElementById('turn-indicator');
-    
-    if (!isGameActive) {
-        statusEl.innerText = "Game Over";
-        turnIndicatorEl.innerText = "🏁 Finished";
-        return;
-    }
+const statusEl = document.getElementById('turn-status');
+const turnIndicatorEl = document.getElementById('turn-indicator');
 
-    // 更新黑白棋指示器
-    if (currentTurn === 1) {
-        turnIndicatorEl.innerText = "⚫ Current: Black";
-        turnIndicatorEl.style.color = "#ccc"; // 黑棋时用灰色
-    } else {
-        turnIndicatorEl.innerText = "⚪ Current: White";
-        turnIndicatorEl.style.color = "#fff"; // 白棋时用亮白
-    }
+if (!isGameActive) {
+statusEl.innerText = "Game Over";
+turnIndicatorEl.innerText = "🏁 Finished";
+return;
+}
 
-    const isMyTurn = currentTurn === myRole;
-    let turnText = "";
-    if (gameMode === 'pve') {
-        if (currentTurn === 1) turnText = "等待输入 (Player)";
-        else turnText = "正在计算 (AI)...";
-    } else {
-        turnText = isMyTurn ? "等待输入 (You)" : "等待对方...";
-    }
-    statusEl.innerText = turnText;
-    statusEl.style.color = isMyTurn ? '#fff' : '#888';
+// 更新黑白棋指示器
+if (currentTurn === 1) {
+turnIndicatorEl.innerText = "⚫ Current: Black";
+turnIndicatorEl.style.color = "#ccc"; // 黑棋时用灰色
+} else {
+turnIndicatorEl.innerText = "⚪ Current: White";
+turnIndicatorEl.style.color = "#fff"; // 白棋时用亮白
+}
 
-    renderSkillCards();
+const isMyTurn = currentTurn === myRole;
+let turnText = "";
+if (gameMode === 'pve') {
+if (currentTurn === 1) turnText = "等待输入 (Player)";
+else turnText = "正在计算 (AI)...";
+} else {
+turnText = isMyTurn ? "等待输入 (You)" : "等待对方...";
+}
+statusEl.innerText = turnText;
+statusEl.style.color = isMyTurn ? '#fff' : '#888';
+
+renderSkillCards();
 }
 
 function checkWin(index, player) {
-    const x = index % BOARD_SIZE;
-    const y = Math.floor(index / BOARD_SIZE);
-    const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+const x = index % BOARD_SIZE;
+const y = Math.floor(index / BOARD_SIZE);
+const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
 
-    for (let [dx, dy] of directions) {
-        let count = 1;
-        for (let i = 1; i < 5; i++) {
-            const nx = x + dx * i, ny = y + dy * i;
-            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
-            // 只有当格子等于当前玩家时才计数，遇到 0 或 -1 (VOID) 或对手棋子都会中断
-            if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
-        }
-        for (let i = 1; i < 5; i++) {
-            const nx = x - dx * i, ny = y - dy * i;
-            if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
-            if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
-        }
-        if (count >= 5) return true;
-    }
-    return false;
+for (let [dx, dy] of directions) {
+let count = 1;
+for (let i = 1; i < 5; i++) {
+const nx = x + dx * i, ny = y + dy * i;
+if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
+// 只有当格子等于当前玩家时才计数，遇到 0 或 -1 (VOID) 或对手棋子都会中断
+if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
+}
+for (let i = 1; i < 5; i++) {
+const nx = x - dx * i, ny = y - dy * i;
+if (nx < 0 || nx >= BOARD_SIZE || ny < 0 || ny >= BOARD_SIZE) break;
+if (boardState[ny * BOARD_SIZE + nx] === player) count++; else break;
+}
+if (count >= 5) return true;
+}
+return false;
 }
 
 function checkFullBoardWin() {
-    for (let i = 0; i < boardState.length; i++) {
-        const player = boardState[i];
-        if (player > 0) { // 只检查有效棋子
-            if (checkWin(i, player)) {
-                endGame(player);
-                return;
-            }
-        }
-    }
+for (let i = 0; i < boardState.length; i++) {
+const player = boardState[i];
+if (player > 0) { // 只检查有效棋子
+if (checkWin(i, player)) {
+endGame(player);
+return;
+}
+}
+}
 }
 
 function endGame(winner) {
-    isGameActive = false;
-    let winnerName = "";
-    if (gameMode === 'pve') {
-        winnerName = winner === 1 ? "玩家 (Player)" : "电脑 (AI)";
-    } else {
-        winnerName = winner === 1 ? "黑方 (Black)" : "白方 (White)";
-    }
+isGameActive = false;
+let winnerName = "";
+if (gameMode === 'pve') {
+winnerName = winner === 1 ? "玩家 (Player)" : "电脑 (AI)";
+} else {
+winnerName = winner === 1 ? "黑方 (Black)" : "白方 (White)";
+}
 
-    const modal = document.getElementById('game-over-modal');
-    const text = document.getElementById('winner-text');
-    text.innerText = `${winnerName} Wins!`;
-    text.style.color = (winner === myRole) ? '#4ec9b0' : '#f48771';
-    modal.style.display = 'flex';
-    updateStatus();
+const modal = document.getElementById('game-over-modal');
+const text = document.getElementById('winner-text');
+text.innerText = `${winnerName} Wins!`;
+text.style.color = (winner === myRole) ? '#4ec9b0' : '#f48771';
+modal.style.display = 'flex';
+updateStatus();
 }
 
 function requestRestart() {
-    resetGame();
-    if (gameMode === 'pvp' && conn && conn.open) conn.send({ type: 'restart' });
-    if (gameMode === 'pve') startGame(1);
+resetGame();
+if (gameMode === 'pvp' && conn && conn.open) conn.send({ type: 'restart' });
+if (gameMode === 'pve') startGame(1);
 }
 
 function resetGame(sendLog = true) {
-    initBoard();
-    isGameActive = true;
-    currentTurn = 1;
-    updateStatus();
-    if(sendLog) log("工作区已重置", 'info');
+initBoard();
+isGameActive = true;
+currentTurn = 1;
+updateStatus();
+if(sendLog) log("工作区已重置", 'info');
 }
 </script>
 </body>
 </html>
-
-
-
-
-
-
