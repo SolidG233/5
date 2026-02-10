@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>main.js - Visual Studio Code (Gomoku Modified)</title>
+<title>main.js - Visual Studio Code (Gomoku PvP Modified)</title>
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 <style>
 /* --- VS Code 风格重置 & 高级 UI --- */
@@ -555,7 +555,6 @@ initBoard();
 // 更新时间显示
 setInterval(() => {
 const now = new Date();
-// 保持日期为2026-02-09，只更新时间
 document.getElementById('date-status').innerText = ` ${now.toLocaleTimeString()}`;
 }, 1000);
 
@@ -867,51 +866,48 @@ updateStatus();
 
 // --- 游戏核心逻辑 ---
 function startGame(role) {
-    myRole = role;
-    currentTurn = 1;
-    isGameActive = true;
-    resetGame(false);
+myRole = role;
+currentTurn = 1;
+isGameActive = true;
+resetGame(false);
 
-    // --- 修改部分开始 ---
-    log("正在预加载扩展包...", 'info');
+// 初始赠送一张技能卡
+log("正在预加载扩展包...", 'info');
 
-    // 判断是否为 PvP 模式
-    if (gameMode === 'pvp') {
-        // 1. 在 SKILLS 数组中找到 id 为 'destroy' (飞沙走石) 的技能
-        const specificSkill = SKILLS.find(s => s.id === 'destroy');
-        
-        if (specificSkill) {
-            // 2. 直接推入玩家手牌
-            mySkills.push(specificSkill);
-            // 3. 渲染 UI 并触发获得动画
-            renderSkillCards(mySkills.length - 1);
-            showExtensionInstalledToast(specificSkill);
-            log(`已预装扩展: ${specificSkill.name} (PvP限定)`, 'success');
-        } else {
-            // 容错：万一找不到该技能，回退到随机获取
-            autoDrawSkill(mySkills, true);
-        }
-    } else {
-        // PvE 模式保持随机获取（如果你想单机也固定，删掉这个 else 即可）
-        autoDrawSkill(mySkills, true);
-    }
-    // --- 修改部分结束 ---
+// --- 修改点：PvP模式固定给予飞沙走石 ---
+if (gameMode === 'pvp') {
+const startSkill = SKILLS.find(s => s.id === 'destroy'); // 飞沙走石 ID
+if (startSkill) {
+mySkills.push(startSkill);
+// 传递 index 以触发动画
+renderSkillCards(mySkills.length - 1);
+showExtensionInstalledToast(startSkill);
+log(`PvP 初始加载: ${startSkill.name}`, 'success');
+} else {
+// 容错处理
+autoDrawSkill(mySkills, true);
+}
+} else {
+// PvE 保持随机
+autoDrawSkill(mySkills, true);
+}
+// ------------------------------------
 
-    // 如果是PvE，也给AI发一张，保持公平（可选）
-    if (gameMode === 'pve') {
-        autoDrawSkill(aiSkills, false);
-        updateOpponentCardCount(aiSkills.length);
-    }
+// 如果是PvE，也给AI发一张，保持公平（可选）
+if (gameMode === 'pve') {
+autoDrawSkill(aiSkills, false);
+updateOpponentCardCount(aiSkills.length);
+}
 
-    let roleName = "";
-    if (gameMode === 'pve') {
-        roleName = "玩家 (执黑)";
-    } else {
-        roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
-    }
+let roleName = "";
+if (gameMode === 'pve') {
+roleName = "玩家 (执黑)";
+} else {
+roleName = myRole === 1 ? "黑棋 (Host)" : "白棋 (Guest)";
+}
 
-    log(`游戏开始: ${roleName}`, 'success');
-    updateStatus();
+log(`游戏开始: ${roleName}`, 'success');
+updateStatus();
 }
 
 // --- AI 逻辑 (PvE) ---
@@ -1389,7 +1385,7 @@ cell.className = 'cell void'; // 添加虚空样式
 
 // 修改：duration 设置为 4，确保能持续3个完整的回合交替
 // 流程：释放(4) -> 对手(3) -> 我(2) -> 对手(1) -> 我(0,解锁)
-voidTracker.push({ index: index, duration: 6 });
+voidTracker.push({ index: index, duration: 10 });
 }
 
 function handleRandomSpawn() {
