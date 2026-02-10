@@ -967,7 +967,7 @@ function aiTryUseSkill(aiRole, playerRole) {
         aiSkills.splice(resetSkillIdx, 1);
         showSkillEffect(skill.name.toUpperCase(), "AI RESETTING YOU");
         // 触发玩家侧的 Reset 逻辑
-        handleResetHardRequest(aiRole, skill.name);
+        handleResetHardRequest(playerRole, skill.name);
         return true;
     }
 
@@ -1499,4 +1499,5 @@ function resetGame(sendLog = true) {
 </script>
 </body>
 </html>
+
 
